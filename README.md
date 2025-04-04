@@ -55,7 +55,7 @@
 ---
 ## [ ERD ]
 
-![ERD](./erd.png)
+![ERD](./moneytalk/erd.png)
 
 ---
 
