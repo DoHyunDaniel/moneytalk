@@ -1,6 +1,6 @@
 # 💸 MoneyTalk 머니톡
 
-> **소비 분석 기반의 중고거래 & 예산 챗봇 플랫폼**
+> **소비 분석 기반의 중고거래 & 예산 챗봇 플랫폼**  
 > 중고 거래와 지출 관리, 그리고 AI 예산 상담을 하나로 통합한 생활 밀착형 서비스
 
 ---
@@ -112,3 +112,28 @@
 - 소비 요약 로직 → AI 응답 생성
 - 테스트 코드 정리 및 기능 통합
 - 배포 준비 및 최종 README 작성
+
+---
+
+## 🛠 최근 개발 일지 / Troubleshooting
+
+### ✅ 2025-03-28
+
+- Spring Security + JWT 기반 로그인/회원가입 기능 구현 완료
+- Swagger UI에 JWT 인증 헤더 적용 (`bearerAuth`)
+- GlobalExceptionHandler 구현 완료
+- Swagger에서 `RestControllerAdvice` 충돌 발생
+  - `springdoc-openapi-starter-webmvc-ui:2.2.0` 사용 시 `NoSuchMethodError` 발생
+  - 원인: springdoc와 spring-web 간의 버전 불일치
+  - 해결: springdoc-openapi-starter-webmvc-ui를 **2.1.0**으로 다운그레이드
+
+```gradle
+// build.gradle 의존성 예시
+implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+```
+
+- Swagger 문서에서 GlobalExceptionHandler의 에러 응답 예시 추가 완료
+- 향후 기능으로 이메일 인증, Google/Naver/Kakao OAuth 로그인 연동도 계획 중
+
+---
+

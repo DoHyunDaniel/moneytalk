@@ -1,0 +1,67 @@
+com.moneytalk
+│
+├── common                  # 공통 유틸, 응답/예외 핸들링 등
+│   ├── exception
+│   ├── response
+│   └── util
+│
+├── config                  # 설정 클래스 (WebSecurity, WebSocket, Swagger 등)
+│
+├── user                    # 사용자 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   └── dto
+│
+├── product                 # 중고 상품 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   └── dto
+│
+├── image                   # 상품 이미지
+│   ├── entity
+│   ├── repository
+│   └── service
+│
+├── chat                    # 채팅 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   ├── dto
+│   └── websocket           # WebSocket 관련 핸들러, 메시지 모델 등
+│
+├── ledger                  # 가계부 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   └── dto
+│
+├── budget                  # 예산 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   └── dto
+│
+├── favorite                # 찜 기능 도메인
+│   ├── entity
+│   ├── repository
+│   └── service
+│
+├── review                  # 거래 후기 도메인
+│   ├── entity
+│   ├── repository
+│   ├── service
+│   ├── controller
+│   └── dto
+│
+├── ai                      # AI 예산 상담 도메인
+│   ├── service
+│   └── dto
+│
+└── MoneytalkApplication.java
