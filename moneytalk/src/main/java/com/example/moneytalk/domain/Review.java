@@ -27,27 +27,28 @@ import lombok.Setter;
 @Builder
 public class Review {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "product_id")
-    private Product product;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "product_id", nullable = false)
+	private Product product;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "reviewer_id")
-    private User reviewer;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "reviewer_id", nullable = false)
+	private User reviewer;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "target_id")
-    private User target;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "target_id", nullable = false)
+	private User target;
 
-    @Column(nullable = false)
-    private Integer rating;
+	@Column(nullable = false)
+	private Integer rating;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+	@Column(columnDefinition = "TEXT")
+	private String content;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
 }

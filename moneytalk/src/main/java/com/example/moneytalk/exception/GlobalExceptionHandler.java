@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Slf4j
-@RestControllerAdvice(basePackages = "com.example.moneytalk.controller")
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // 1. Validation 실패 (DTO @Valid)
@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(e -> String.format("[%s] %s", e.getField(), e.getDefaultMessage()))
                 .collect(Collectors.joining("; "));
 
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());

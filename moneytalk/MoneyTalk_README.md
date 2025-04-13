@@ -140,5 +140,36 @@ implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 - Swagger 문서에서 GlobalExceptionHandler의 에러 응답 예시 추가 완료
 - 향후 기능으로 이메일 인증, Google/Naver/Kakao OAuth 로그인 연동도 계획 중
 
+
+### ✅ 2025-04-11
+## ❤️ 찜하기(좋아요) 기능 설계
+
+### ✅ 구현 목적
+- 사용자가 마음에 드는 상품을 저장해두고 나중에 다시 확인할 수 있도록 합니다.
+- 상품의 인기 순위를 계산하거나, 사용자 취향 기반 추천에 활용할 수 있습니다.
+
+### 🛠️ 기술 선택 배경
+
+| 구현 방식 | 장점 | 단점 |
+|-----------|------|------|
+| **📦 DB 기반** (`favorite_products` 테이블 생성) | - 데이터 영속성<br>- 쿼리 확장 용이 (찜 목록, 찜 수 통계)<br>- 관리, 통계 시스템 연계 쉬움 | - 데이터량 증가 시 성능 이슈 가능 |
+| **⚡ Redis 기반** (Set/SortedSet 활용) | - 실시간 인기 상품 캐싱 용이<br>- 빠른 응답 속도<br>- 서버 확장성과 캐시 처리에 유리 | - 휘발성 데이터 (재시작 시 초기화)<br>- 복합 쿼리 어려움 |
+
+> ✅ **현재는 안정성과 연동 편의성을 고려해 DB 기반으로 구현**  
+> ⏩ 이후 트래픽 증가 시 **Redis 캐싱 구조로 확장 예정**
+
 ---
+
+### 📐 테이블 설계 (`favorite_products`)
+
+```sql
+Table favorite_products {
+  id BIGINT [pk, increment]
+  user_id BIGINT [ref: > users.id]
+  product_id BIGINT [ref: > products.id]
+  created_at DATETIME [default: `CURRENT_TIMESTAMP`]
+}
+
+---
+
 
