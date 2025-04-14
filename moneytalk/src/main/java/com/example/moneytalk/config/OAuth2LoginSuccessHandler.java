@@ -28,18 +28,23 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             HttpServletResponse response,
             Authentication authentication
     ) throws IOException, ServletException {
-    	
-        // OAuth2User에서 이메일 꺼내기
-        String email = ((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal()).getAttribute("email");
+
+        String email = ((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal())
+                .getAttribute("email");
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getEmail());
 
-        // Redirect URL 구성
-        String redirectUrl = "http://localhost:3000/login-success?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        // JWT를 httpOnly 쿠키로 설정
+        String cookieValue = "token=" + token +
+                "; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax";
 
-        response.sendRedirect(redirectUrl);
+        response.setHeader("Set-Cookie", cookieValue);
+
+        // 프론트엔드로 리디렉트
+        response.sendRedirect("http://localhost:5173/home");
     }
+
 }

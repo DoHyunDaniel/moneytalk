@@ -1,5 +1,9 @@
 package com.example.moneytalk.domain;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,4 +37,7 @@ public class ProductImage {
 
     @Column(nullable = false, length = 255)
     private String imageUrl;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }

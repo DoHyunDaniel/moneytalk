@@ -36,4 +36,22 @@ public class S3Uploader {
 
         return amazonS3.getUrl(bucket, fileName).toString();
     }
+    
+    public void deleteFile(String fileUrl) {
+        // fileUrl: https://{bucket}.s3.{region}.amazonaws.com/{dirName}/{fileName}
+        // → "dirName/fileName" 형식으로 추출해서 삭제해야 함
+
+        String fileKey = extractFileKey(fileUrl);
+        if (amazonS3.doesObjectExist(bucket, fileKey)) {
+            amazonS3.deleteObject(bucket, fileKey);
+        } else {
+            throw new RuntimeException("삭제할 파일을 찾을 수 없습니다: " + fileUrl);
+        }
+    }
+
+    private String extractFileKey(String fileUrl) {
+        // URL에서 버킷 도메인을 제거한 상대 경로를 추출
+        return fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
+    }
+
 }

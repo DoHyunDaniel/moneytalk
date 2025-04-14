@@ -20,41 +20,49 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userRepository;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final UserRepository userRepository;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
 
-        String token = resolveToken(request);
+		String token = resolveToken(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            Long userId = jwtTokenProvider.getUserId(token);
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+		if (token != null && jwtTokenProvider.validateToken(token)) {
+			Long userId = jwtTokenProvider.getUserId(token);
+			User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
-            // user는 이미 UserDetails 구현체이므로 바로 사용 가능
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            
-            // 인증 상세 정보 설정 (IP, 세션 등)
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
+			// user는 이미 UserDetails 구현체이므로 바로 사용 가능
+			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
+					user.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
+			// 인증 상세 정보 설정 (IP, 세션 등)
+			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-        filterChain.doFilter(request, response);
-    }
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+		}
 
-    private String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-        return null;
-    }
+		filterChain.doFilter(request, response);
+	}
+
+	private String resolveToken(HttpServletRequest request) {
+		// 1. Authorization 헤더 검사
+		String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
+		if (bearer != null && bearer.startsWith("Bearer ")) {
+			return bearer.substring(7);
+		}
+
+		// 2. Cookie에서 "token" 항목 찾기
+		if (request.getCookies() != null) {
+			for (var cookie : request.getCookies()) {
+				if ("token".equals(cookie.getName())) {
+					return cookie.getValue();
+				}
+			}
+		}
+
+		return null;
+	}
+
 }

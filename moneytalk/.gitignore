@@ -45,3 +45,5 @@ application-*.properties
 *.jar
 *.war
 *.ear
+
+/build/generated/

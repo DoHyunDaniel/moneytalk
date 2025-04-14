@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.example.moneytalk.type.ProductStatus;
+import com.example.moneytalk.type.PurchaseType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,44 +23,25 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "products")
+@Table(name = "purchase_records")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product {
+public class PurchaseRecord {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "user_id")
-	private User user;
-
-	@Column(nullable = false, length = 100)
-	private String title;
-
-	@Column(columnDefinition = "TEXT")
-	private String description;
-	
-	@ManyToOne
 	@JoinColumn(name = "buyer_id")
 	private User buyer;
-	
-	@Column(nullable = false)
-	private Integer price;
 
-	@Column(nullable = false, length = 30)
-	private String category;
-
-	@Column(nullable = false, length = 100)
-	private String location;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private ProductStatus status = ProductStatus.SALE;
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "product_id")
+	private Product product;
 
 	@CreationTimestamp
 	private LocalDateTime createdAt;

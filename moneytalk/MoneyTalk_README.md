@@ -172,4 +172,94 @@ Table favorite_products {
 
 ---
 
+# 🛍️ MoneyTalk - 2주차 백엔드 개발 정리
 
+## 🔧 주요 구현 기능
+
+### 1. 상품 등록 / 조회 / 상세 API
+- 상품 등록 시 필드: `title`, `description`, `price`, `category`, `location`, `status`
+- 상품 전체 목록 조회: `GET /api/products`
+- 상품 단건 상세 조회: `GET /api/products/{id}`
+- ✅ JWT 인증 기반으로 Swagger 테스트 완료
+
+---
+
+### 2. 찜하기(좋아요) 기능
+- 찜 토글 API: `POST /api/wishlist/{productId}`
+- 이미 찜한 상품이면 삭제, 아니라면 추가
+- 상품 상세 정보 조회 시 찜 여부 반환 포함
+
+---
+
+### 3. 리뷰 작성 / 조회 / 평균 평점
+- 리뷰 작성 시 이미지 업로드 지원 (Amazon S3 연동)
+  - 다중 이미지 업로드
+  - `multipart/form-data` 형식 처리
+- 상품별 리뷰 리스트 조회: `GET /api/reviews/products/{productId}`
+- 받은 리뷰 목록 조회: `GET /api/reviews/received`
+- 평균 평점 조회: `GET /api/reviews/products/{productId}/average`
+
+---
+
+### 4. 구매 확정 및 구매 기록 저장
+- 상품 구매 시 `purchase_history` 테이블에 기록 저장
+- 추후 가계부 기능과 연동 예정
+
+---
+
+## 🐞 트러블슈팅 기록
+
+### 1. `ProductResponseDto::from` 오류
+
+> **오류 메시지**  
+> `The type ProductResponseDto does not define from(Product)`
+
+- **원인**: DTO 클래스에 정적 팩토리 메소드가 정의되어 있지 않음
+- **해결 방법**:
+```java
+public static ProductResponseDto from(Product product) {
+    return ProductResponseDto.builder()
+        .id(product.getId())
+        .title(product.getTitle())
+        .price(product.getPrice())
+        // 기타 필드...
+        .build();
+}
+### 2. 리뷰 이미지 업로드 실패
+
+> **문제**  
+> 리뷰 작성 시 이미지 업로드가 되지 않음
+
+- **원인**
+  - `multipartResolver` 설정 누락
+  - Amazon S3 버킷 권한 부족
+
+- **해결 방법**
+  - `application.yml`에 multipart 설정 추가
+  - IAM 사용자에 `AmazonS3FullAccess` 권한 부여
+  - `S3Uploader` 로직 점검 및 예외 처리 보강
+
+---
+
+### 3. Swagger JWT 인증 문제
+
+> **문제**  
+> Swagger에서 `Authorization` 헤더가 적용되지 않음
+
+- **해결 방법**: Swagger 설정에 JWT 인증 스키마 명시
+```java
+.addSecurityItem(new SecurityRequirement().addList("JWT"))
+.components(new Components().addSecuritySchemes("JWT",
+    new SecurityScheme()
+        .type(SecurityScheme.Type.HTTP)
+        .scheme("bearer")
+        .bearerFormat("JWT")
+))
+
+## 🚧 다음 목표 (예정)
+
+- 🔍 **상품 검색 및 필터 기능 추가**  
+  사용자 검색어 및 조건(카테고리, 위치 등)에 따른 상품 필터링 기능 제공
+
+- ❤️ **찜한 상품 리스트 조회 기능**  
+  사용자가 찜한 상품 목록을 별도로 조회할 수 있는 API 구현
