@@ -225,6 +225,7 @@ public static ProductResponseDto from(Product product) {
         // 기타 필드...
         .build();
 }
+```
 ### 2. 리뷰 이미지 업로드 실패
 
 > **문제**  
@@ -255,7 +256,7 @@ public static ProductResponseDto from(Product product) {
         .scheme("bearer")
         .bearerFormat("JWT")
 ))
-
+```
 ## 🚧 다음 목표 (예정)
 
 - 🔍 **상품 검색 및 필터 기능 추가**  
