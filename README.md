@@ -169,7 +169,7 @@ Table favorite_products {
   product_id BIGINT [ref: > products.id]
   created_at DATETIME [default: `CURRENT_TIMESTAMP`]
 }
-
+```
 ---
 
 # 🛍️ MoneyTalk - 2주차 백엔드 개발 정리
