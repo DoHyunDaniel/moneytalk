@@ -209,54 +209,85 @@ Table favorite_products {
 
 ## 🐞 트러블슈팅 기록
 
-### 1. `ProductResponseDto::from` 오류
+## 🔧 리뷰 & 구매 확정 관련 트러블슈팅 모음
 
-> **오류 메시지**  
-> `The type ProductResponseDto does not define from(Product)`
+### 1. ✅ `@ModelAttribute`와 `@RequestPart` 혼용 문제
 
-- **원인**: DTO 클래스에 정적 팩토리 메소드가 정의되어 있지 않음
+- **문제**: 리뷰 작성/수정 시 JSON과 이미지 파일을 동시에 전송하면 `MethodArgumentNotValidException` 발생
+- **원인**:
+  - DTO를 `@RequestBody`로 받을 수 없고,
+  - `multipart/form-data` 요청에서 JSON을 `@ModelAttribute`로 받으려 했지만 validation이 깨짐
 - **해결 방법**:
-```java
-public static ProductResponseDto from(Product product) {
-    return ProductResponseDto.builder()
-        .id(product.getId())
-        .title(product.getTitle())
-        .price(product.getPrice())
-        // 기타 필드...
-        .build();
-}
-```
-### 2. 리뷰 이미지 업로드 실패
-
-> **문제**  
-> 리뷰 작성 시 이미지 업로드가 되지 않음
-
-- **원인**
-  - `multipartResolver` 설정 누락
-  - Amazon S3 버킷 권한 부족
-
-- **해결 방법**
-  - `application.yml`에 multipart 설정 추가
-  - IAM 사용자에 `AmazonS3FullAccess` 권한 부여
-  - `S3Uploader` 로직 점검 및 예외 처리 보강
+  - DTO에 `@Schema(type = "string")` 명시
+  - `@ModelAttribute` 방식으로 처리
+  - Swagger에서는 `FormData` 방식으로 각 필드 (`productId`, `targetUserId`, `rating`, `content`)를 수동 입력
 
 ---
 
-### 3. Swagger JWT 인증 문제
+### 2. ✅ `S3Uploader`에 `deleteFile()` 누락
 
-> **문제**  
-> Swagger에서 `Authorization` 헤더가 적용되지 않음
+- **문제**: 리뷰 수정/삭제 시 S3에 업로드된 이미지를 제거해야 하나 관련 메서드 없음
+- **해결 방법**:
+  - `S3Uploader` 클래스에 `deleteFile(String fileUrl)` 메서드 직접 구현
 
-- **해결 방법**: Swagger 설정에 JWT 인증 스키마 명시
-```java
-.addSecurityItem(new SecurityRequirement().addList("JWT"))
-.components(new Components().addSecuritySchemes("JWT",
-    new SecurityScheme()
-        .type(SecurityScheme.Type.HTTP)
-        .scheme("bearer")
-        .bearerFormat("JWT")
-))
-```
+---
+
+### 3. ✅ `ReviewResponseDto.from()` 관련 오류
+
+- **문제**: Builder에 정의되지 않은 필드를 사용해 `The method X is undefined` 오류 발생
+- **해결 방법**:
+  - DTO에 누락된 필드들 (`productId`, `targetId`, `reviewerId`, `imageUrls`) 추가
+  - Builder에 해당 필드 반영
+
+---
+
+### 4. ✅ 리뷰 단건 조회 및 이미지 리스트 포함 로직
+
+- **문제**: 기존 `ReviewResponseDto.from(Review)`는 이미지 포함 기능이 없어 확장 시 오류 발생
+- **해결 방법**:
+  - `from(Review, List<String> imageUrls)` 메서드 추가
+  - 기존 호출부에서 해당 메서드로 수정
+
+---
+
+### 5. ✅ 리뷰 수정 시 DTO 바인딩 실패
+
+- **문제**: Swagger에서 `@ModelAttribute`로 DTO 파라미터를 넘기지 못해 DTO 값이 null로 들어감
+- **해결 방법**:
+  - `@ModelAttribute` 방식 유지
+  - Swagger에서 `form-data` 형식으로 `rating`, `content` 직접 입력
+  - DTO 필드에 `@Schema(type = "string" 또는 "integer")` 명시하여 Swagger 입력 형식 개선
+
+---
+
+### 6. ✅ JWT 인증 관련 오류 (401 Unauthorized)
+
+- **문제**: Swagger에서 토큰 인증했음에도 401 오류 발생
+- **해결 방법**:
+  - 토큰 만료 여부 확인 (예: JWT 1시간 유효)
+  - Swagger 상단 Authorize 클릭 → `Bearer <token>` 형식으로 갱신
+  - 백엔드에서 쿠키 기반 인증과 `Authorization` 헤더 인증 병행 처리
+
+---
+
+### 7. ✅ Spring Data JPA 쿼리 메서드 오류
+
+- **문제**: `existsByUserIdAndProductId()` 메서드에서 `userId`를 필드로 인식하지 못함  
+  > `No property 'userId' found for type`
+- **해결 방법**:
+  - 실제 필드명이 `user`이므로  
+    → 메서드를 `existsByUser_IdAndProduct_Id()` 형식으로 작성해야 인식됨
+
+---
+
+### 8. ✅ 평균 평점 조회 시 `ClassCastException`
+
+- **문제**: `Object[]`를 직접 캐스팅할 때 `java.lang.ClassCastException` 발생
+- **해결 방법**:
+  - `List<Object[]>` 형식으로 결과 받기
+  - `result[0]`와 `result[1]`을 각각 `Number`로 캐스팅 후  
+    `.longValue()` / `.doubleValue()`로 변환하여 사용
+
 ## 🚧 다음 목표 (예정)
 
 - 🔍 **상품 검색 및 필터 기능 추가**  
