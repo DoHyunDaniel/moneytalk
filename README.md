@@ -1,201 +1,83 @@
-<<<<<<< HEAD
-# 💸 MoneyTalk 머니톡
+# 💸 MoneyTalk Frontend
 
-> **소비 분석 기반의 중고거래 & 예산 챗봇 플랫폼**  
-> 중고 거래와 지출 관리, 그리고 AI 예산 상담을 하나로 통합한 생활 밀착형 서비스
-
----
-
-## [ 기능 ]
-
-### # 회원 관리
-**사용자 등록 및 인증**
-- 회원가입 기능 (이메일, 비밀번호, 닉네임)
-- 로그인 / 로그아웃 기능 (JWT 기반)
-- 내 정보 조회 및 수정
-- 권한 관리 (USER / ADMIN)
-
-> ※ 소셜 로그인, 비밀번호 재설정, 프로필 이미지 등은 향후 확장 가능
-
-### # 중고 거래 시스템
-**상품 관리**
-- 상품 등록 / 조회 / 수정 / 삭제
-- 판매 상태 변경 (판매 중 → 예약 중 → 판매 완료)
-- 찜하기 기능
-
-**후기 시스템**
-- 거래 완료 후 리뷰 작성 (평점 + 내용)
-- 판매자/구매자에 대한 후기 확인
-
-### # 실시간 채팅 시스템
-**채팅 기능**
-- WebSocket 기반 1:1 실시간 채팅
-- Redis Pub/Sub 기반 메시지 송수신
-- 채팅방 목록 조회, 메시지 저장
-
-### # 가계부 & 예산 관리 시스템
-**지출/수입 기록**
-- 금액, 카테고리, 메모, 날짜 등록
-- 월별 소비 내역 조회
-
-**예산 설정**
-- 사용자별 월 예산 설정
-- 예산 초과 시 알림
-
-**소비 분석**
-- 카테고리별 소비 통계
-- 월별 소비 증감 비교
-- 과소비 항목 분석 (TOP 3)
-
-### # AI 예산 챗봇 시스템
-**챗봇 예산 상담**
-- “이번 달 많이 썼어?”
-- “어떻게 줄일 수 있을까?”
-- 소비 요약 → ChatGPT API 연동 → 자연어 응답
-
----
-## [ ERD ]
-
-![ERD](./moneytalk/erd.png)
+MoneyTalk는 사용자 간 중고 상품 거래 및 커뮤니케이션을 지원하는 플랫폼입니다.  
+이 리포지토리는 React 기반 프론트엔드 코드로, 백엔드(Spring Boot)와 연동되어 작동합니다.
 
 ---
 
-## [ 기술 스택 ]
+## 🛠️ 기술 스택
 
-### 백엔드
-- Java 17
-- Spring Boot
-- Spring Security (JWT)
-- Spring WebSocket
-- Spring Data JPA
-- Lombok
-
-### 데이터베이스
-- MySQL
-- Redis
-
-### AI 연동
-- OpenAI ChatGPT API
-
-### 인프라 (계획)
-- Docker
-- AWS (EC2, S3 등)
-
-### 문서화 & 협업
-- Swagger (springdoc-openapi)
-- GitHub, Slack, Notion
+- **React 18** with TypeScript
+- **Vite**
+- **React Router v6**
+- **Axios**
+- **Context API** – 로그인 상태 전역 관리
+- **JWT + HttpOnly Cookie 인증**
+- **OAuth2 (Google 소셜 로그인)**
 
 ---
 
-## [ 개발 계획 - 5주 ]
+## 📁 폴더 구조
 
-### 1주차: 기획 및 기본 구조 구축
-- 요구사항 분석, ERD 설계
-- 프로젝트 구조 세팅
-- Spring Boot 기본 설정 (Security, JPA 등)
-- 회원가입 / 로그인 기능 구현
-- Swagger 문서화 적용
-
-### 2주차: 중고 거래 기능
-- 상품 등록 / 조회 / 상세 / 찜하기
-- 판매 상태 변경 API
-- 리뷰 작성 기능 추가
-- 기본 UI 데이터 반환 테스트
-
-### 3주차: 채팅 시스템
-- WebSocket 설정
-- 채팅방 생성, 메시지 송수신
-- Redis Pub/Sub 적용
-- 채팅 메시지 저장 로직
-
-### 4주차: 가계부 & 예산 관리
-- 수입/지출 등록, 월간 소비 조회
-- 예산 설정, 예산 초과 계산
-- 카테고리별 소비 통계 분석
-
-### 5주차: 챗봇 연동 & 마무리
-- ChatGPT API 연동
-- 소비 요약 로직 → AI 응답 생성
-- 테스트 코드 정리 및 기능 통합
-- 배포 준비 및 최종 README 작성
-
----
-
-## 🛠 최근 개발 일지 / Troubleshooting
-
-### ✅ 2025-03-28
-
-- Spring Security + JWT 기반 로그인/회원가입 기능 구현 완료
-- Swagger UI에 JWT 인증 헤더 적용 (`bearerAuth`)
-- GlobalExceptionHandler 구현 완료
-- Swagger에서 `RestControllerAdvice` 충돌 발생
-  - `springdoc-openapi-starter-webmvc-ui:2.2.0` 사용 시 `NoSuchMethodError` 발생
-  - 원인: springdoc와 spring-web 간의 버전 불일치
-  - 해결: springdoc-openapi-starter-webmvc-ui를 **2.1.0**으로 다운그레이드
-
-```gradle
-// build.gradle 의존성 예시
-implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+```bash
+moneytalk_frontend/
+├── src/
+│   ├── api/              # Axios instance 및 API 모듈
+│   ├── components/       # 공통 UI 컴포넌트 (Header, Form 등)
+│   ├── context/          # AuthContext (전역 로그인 상태 관리)
+│   ├── hooks/            # 커스텀 훅 (useAuth 등)
+│   ├── pages/            # 라우팅되는 개별 페이지들
+│   ├── router/           # AppRouter (React Router 설정)
+│   ├── styles/           # 글로벌 CSS
+│   └── main.tsx          # 앱 진입점
 ```
 
-- Swagger 문서에서 GlobalExceptionHandler의 에러 응답 예시 추가 완료
-- 향후 기능으로 이메일 인증, Google/Naver/Kakao OAuth 로그인 연동도 계획 중
+---
+
+## 🚀 주요 기능
+
+- ✅ 회원가입 / 로그인
+- ✅ JWT 기반 인증 처리
+- ✅ 로그인 상태 헤더에 반영
+- ✅ 로그아웃 기능
+- ✅ 소셜 로그인 (Google) 연동
+- ⏳ 찜 목록 / 구매 내역 / 리뷰 기능 개발 중...
 
 ---
 
-=======
-# React + TypeScript + Vite
+## 🧪 개발 서버 실행
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```bash
+# 1. 의존성 설치
+npm install
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+# 2. 개발 서버 실행
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+> 기본 주소: [http://localhost:5173](http://localhost:5173)  
+> 백엔드는 `http://localhost:8080`에서 Spring Boot가 실행되어야 합니다.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
->>>>>>> 3684fc0 (초기 커밋: 프론트엔드 설정 및 로그인 구현)
+## 🌐 환경 변수
+
+현재는 별도 `.env` 설정 없이 Axios `baseURL`에 `http://localhost:8080/api`가 하드코딩되어 있습니다.  
+추후 배포 시 `.env` 파일로 관리 예정입니다.
+
+---
+
+## 📦 배포 계획
+
+- 프론트: Vercel 또는 Netlify
+- 백엔드: AWS EC2 or Render
+
+---
+
+## 📌 개발자
+
+| 이름 | 역할 |
+|------|------|
+| DoHyun Daniel Kim | Frontend & Backend 개발, 전체 아키텍처 설계 |
+
+---
