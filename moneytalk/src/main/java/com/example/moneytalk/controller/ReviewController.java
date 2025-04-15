@@ -35,6 +35,20 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * ReviewController 리뷰(후기) 및 리뷰 이미지 관련 API를 제공하는 컨트롤러입니다.
+ *
+ * [기능 설명] - 리뷰 작성, 수정, 삭제 - 리뷰 단건 및 받은 리뷰 목록 조회 - 리뷰 이미지 업로드 및 조회 - 상품의 평균 평점 및
+ * 리뷰 수 조회
+ *
+ * [보안] - 리뷰 작성/수정/삭제/이미지 업로드는 JWT 인증 필요
+ *
+ * [관련 대상] - 구매자만 리뷰 작성 가능 - 리뷰는 상품당 1회 작성 가능 - 본인의 리뷰만 수정/삭제 가능
+ *
+ * @author Daniel
+ * @since 2025.04.15
+ */
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
@@ -42,6 +56,9 @@ public class ReviewController {
 
 	private final ReviewService reviewService;
 	private final ReviewImageService reviewImageService;
+
+	
+	// ───────────────────── 리뷰 등록/수정/삭제 ─────────────────────
 
 	@Operation(summary = "리뷰 작성 + 이미지 업로드", description = "리뷰를 작성하면서 이미지도 함께 업로드합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "리뷰 작성 성공"),
@@ -55,56 +72,49 @@ public class ReviewController {
 					    }
 					"""))),
 			@ApiResponse(responseCode = "401", description = "인증 실패 (JWT 토큰 없음 또는 만료됨)") })
-
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<Void> writeReview(
-	        @AuthenticationPrincipal User reviewer,
-	        @ParameterObject @ModelAttribute @Valid ReviewRequestDto dto,
-	        @Parameter(name = "images", description = "이미지 파일 리스트 (최소 1장)", required = true)
-	        @RequestPart("images") List<MultipartFile> images) {
+	public ResponseEntity<Void> writeReview(@AuthenticationPrincipal User reviewer,
+			@ParameterObject @ModelAttribute @Valid ReviewRequestDto dto,
+			@Parameter(name = "images", description = "이미지 파일 리스트 (최소 1장)", required = true) @RequestPart("images") List<MultipartFile> images) {
 
-	    reviewService.writeReviewWithImages(dto, images, reviewer);
-	    return ResponseEntity.ok().build();
+		reviewService.writeReviewWithImages(dto, images, reviewer);
+		return ResponseEntity.ok().build();
 	}
-
-
 
 	@PatchMapping(value = "/{reviewId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "리뷰 수정 + 이미지 교체", description = "리뷰 내용과 이미지를 수정합니다.", security = @SecurityRequirement(name = "bearerAuth"))
-	public ResponseEntity<Void> updateReview(
-	        @PathVariable("reviewId") Long reviewId,
-	        @AuthenticationPrincipal User reviewer,
-	        @ParameterObject @ModelAttribute @Valid ReviewUpdateRequestDto dto,
-	        @Parameter(name = "images", description = "이미지 파일 리스트 (최소 1장)", required = true)
-	        @RequestPart("images") List<MultipartFile> images) {
+	public ResponseEntity<Void> updateReview(@PathVariable("reviewId") Long reviewId,
+			@AuthenticationPrincipal User reviewer, @ParameterObject @ModelAttribute @Valid ReviewUpdateRequestDto dto,
+			@Parameter(name = "images", description = "이미지 파일 리스트 (최소 1장)", required = true) @RequestPart("images") List<MultipartFile> images) {
 
-	    reviewService.updateReviewWithImages(reviewId, dto, reviewer, images);
-	    return ResponseEntity.noContent().build();
+		reviewService.updateReviewWithImages(reviewId, dto, reviewer, images);
+		return ResponseEntity.noContent().build();
 	}
-
-
 
 	@DeleteMapping("/{reviewId}")
 	@Operation(summary = "리뷰 삭제", description = "리뷰 작성자가 본인의 리뷰를 삭제합니다.", security = @SecurityRequirement(name = "bearerAuth"))
-	public ResponseEntity<Void> deleteReview(@PathVariable("reviewId") Long reviewId, @AuthenticationPrincipal User reviewer) {
+	public ResponseEntity<Void> deleteReview(@PathVariable("reviewId") Long reviewId,
+			@AuthenticationPrincipal User reviewer) {
 		reviewService.deleteReview(reviewId, reviewer);
 		return ResponseEntity.noContent().build();
 	}
 
+	
+	// ───────────────────── 리뷰 조회 기능 ─────────────────────
+	
 	@Operation(summary = "내가 받은 리뷰 목록 조회", description = "로그인한 사용자가 받은 모든 리뷰를 조회합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@GetMapping("/received")
 	public ResponseEntity<List<ReviewResponseDto>> getReceivedReviews(@AuthenticationPrincipal User user) {
 		List<ReviewResponseDto> reviews = reviewService.getReviewsReceivedByUser(user);
 		return ResponseEntity.ok(reviews);
 	}
-	
+
 	@GetMapping("/{reviewId}")
 	@Operation(summary = "리뷰 단건 조회", description = "리뷰 ID로 상세 정보를 조회합니다.")
 	public ResponseEntity<ReviewResponseDto> getReviewById(@PathVariable("reviewId") Long reviewId) {
-	    ReviewResponseDto dto = reviewService.getReviewById(reviewId);
-	    return ResponseEntity.ok(dto);
+		ReviewResponseDto dto = reviewService.getReviewById(reviewId);
+		return ResponseEntity.ok(dto);
 	}
-
 
 	@Operation(summary = "상품 평균 평점 조회", description = "상품 ID에 대한 평균 평점과 리뷰 수를 반환합니다.")
 	@GetMapping("/products/{productId}/average-rating")
@@ -112,6 +122,9 @@ public class ReviewController {
 		return ResponseEntity.ok(reviewService.getAverageRatingInfo(productId));
 	}
 
+	
+	// ───────────────────── 리뷰 이미지 업로드/조회 ─────────────────────
+	
 	@Operation(summary = "리뷰 이미지 업로드", description = "리뷰 작성 이후 이미지 파일들을 업로드합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponse(responseCode = "200", description = "업로드 성공, 이미지 URL 리스트 반환")
 	@PostMapping(value = "/{reviewId}/images", consumes = "multipart/form-data")

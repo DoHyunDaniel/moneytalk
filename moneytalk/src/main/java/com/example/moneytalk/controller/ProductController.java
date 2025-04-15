@@ -39,6 +39,27 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+
+/**
+ * ProductController
+ * 상품과 관련된 API 요청을 처리하는 컨트롤러입니다.
+ *
+ * [기능 구성]
+ * - 상품 등록, 단건/전체 조회, 검색
+ * - 찜하기 기능 (토글/개수 조회)
+ * - 리뷰 조회
+ * - 이미지 목록 조회
+ * - 상품 상태 변경 (예약/판매 완료 등)
+ * - 구매 확정 처리
+ *
+ * [보안]
+ * - 등록, 상태 변경, 찜, 구매 확정 등은 JWT 인증 필요
+ *
+ * @author Daniel
+ * @since 2025.04.15
+ */
+
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -49,6 +70,8 @@ public class ProductController {
 	private final ReviewService reviewService;
 	private final ProductImageService productImageService;
 
+	
+	// ────────────────── 상품 등록/조회 ──────────────────
 
 	@Operation(summary = "상품 등록", description = "상품 정보와 이미지를 함께 등록합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponses({
@@ -66,6 +89,16 @@ public class ProductController {
 	    return ResponseEntity.ok().build();
 	}
 
+	@Operation(summary = "상품 상태 변경", description = "상품의 판매 상태(SALE, RESERVED, SOLD)를 변경합니다.", security = @SecurityRequirement(name = "bearerAuth"))
+	@PatchMapping("/{id}/status")
+	public ResponseEntity<Void> updateProductStatus(
+	        @Parameter(name = "id", description = "상품 ID", example = "1") @PathVariable("id") Long id,
+	        @RequestBody @Valid ProductStatusUpdateRequest request,
+	        @AuthenticationPrincipal User user) {
+	    productService.updateProductStatus(id, request.getStatus(), user);
+	    return ResponseEntity.noContent().build();
+	}
+	
 	@Operation(summary = "상품 단건 조회", description = "상품 ID를 기반으로 상세 정보를 조회합니다.")
 	@ApiResponses(value = {
 	        @ApiResponse(responseCode = "200", description = "상품 조회 성공", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponseDto.class))),
@@ -78,6 +111,9 @@ public class ProductController {
 	    return ResponseEntity.ok(productService.getProductById(productId));
 	}
 
+	
+	// ────────────────── 찜하기 기능 ──────────────────
+	
 	@Operation(summary = "찜하기 토글", description = "특정 상품을 찜하거나 찜을 취소합니다. (로그인 필요)", security = @SecurityRequirement(name = "bearerAuth"))
 	@PostMapping("/{id}/favorite")
 	public ResponseEntity<String> toggleFavorite(
@@ -94,16 +130,10 @@ public class ProductController {
 	    return ResponseEntity.ok(favoriteService.getFavoriteCount(id));
 	}	
 
-	@Operation(summary = "상품 상태 변경", description = "상품의 판매 상태(SALE, RESERVED, SOLD)를 변경합니다.", security = @SecurityRequirement(name = "bearerAuth"))
-	@PatchMapping("/{id}/status")
-	public ResponseEntity<Void> updateProductStatus(
-	        @Parameter(name = "id", description = "상품 ID", example = "1") @PathVariable("id") Long id,
-	        @RequestBody @Valid ProductStatusUpdateRequest request,
-	        @AuthenticationPrincipal User user) {
-	    productService.updateProductStatus(id, request.getStatus(), user);
-	    return ResponseEntity.noContent().build();
-	}
 
+
+	// ────────────────── 리뷰, 이미지 조회 ──────────────────
+	
 	@Operation(summary = "상품 리뷰 목록 조회", description = "특정 상품에 대한 모든 리뷰를 조회합니다.")
 	@GetMapping("/{productId}/reviews")
 	public ResponseEntity<List<ReviewResponseDto>> getProductReviews(
@@ -123,6 +153,9 @@ public class ProductController {
 	    List<String> imageUrls = productImageService.getImageUrlsByProductId(productId);
 	    return ResponseEntity.ok(imageUrls);
 	}
+	
+	
+	// ────────────────── 검색 및 구매 확정 ──────────────────
 
 	@Operation(summary = "상품 검색", description = """
 	        상품 제목, 설명, 카테고리, 지역, 가격 범위, 판매 상태 등의 조건으로 상품을 검색합니다.
