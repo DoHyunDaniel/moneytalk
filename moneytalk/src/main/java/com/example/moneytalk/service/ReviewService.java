@@ -21,6 +21,30 @@ import com.example.moneytalk.type.ProductStatus;
 
 import lombok.RequiredArgsConstructor;
 
+
+/**
+ * ReviewService
+ * 사용자 간 거래 후 작성되는 리뷰(후기)를 처리하는 서비스입니다.
+ *
+ * [기능 설명]
+ * - 리뷰 작성 (이미지 포함)
+ * - 리뷰 단건/목록 조회
+ * - 리뷰 수정 및 삭제
+ * - 받은 리뷰 목록 조회
+ * - 상품별 평균 평점 및 리뷰 수 조회
+ *
+ * [검증 포인트]
+ * - 거래 완료된 상품에만 리뷰 작성 가능
+ * - 구매자만 리뷰 작성 가능
+ * - 리뷰는 한 번만 작성 가능
+ * - 본인 리뷰만 수정/삭제 가능
+ *
+ * [관련 서비스]
+ * - {@link ReviewImageService}: 리뷰 이미지 등록/삭제 처리
+ *
+ * @author Daniel
+ * @since 2025.04.15
+ */
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -29,6 +53,16 @@ public class ReviewService {
 	private final UserRepository userRepository;
 	private final ReviewImageService reviewImageService;
 
+	
+    /**
+     * 리뷰를 작성하고, 첨부 이미지가 있다면 S3에 업로드합니다.
+     *
+     * @param dto 리뷰 작성 요청 DTO
+     * @param imageFiles 이미지 파일 리스트
+     * @param reviewer 리뷰 작성자
+     * @throws IllegalArgumentException 유효하지 않은 입력 (예: 자기자신 리뷰, 중복 작성 등)
+     * @throws AccessDeniedException 권한 없는 사용자가 작성 시
+     */
 	@Transactional
 	public void writeReviewWithImages(ReviewRequestDto dto, List<MultipartFile> imageFiles, User reviewer) {
 		Product product = productRepository.findById(dto.getProductId())
@@ -68,6 +102,13 @@ public class ReviewService {
 		}
 	}
 
+	
+    /**
+     * 특정 상품에 작성된 리뷰 목록을 이미지와 함께 조회합니다.
+     *
+     * @param productId 상품 ID
+     * @return 리뷰 응답 DTO 리스트
+     */
 	@Transactional(readOnly = true)
 	public List<ReviewResponseDto> getReviewsByProductId(Long productId) {
 	    List<Review> reviews = reviewRepository.findByProductId(productId);
@@ -80,6 +121,13 @@ public class ReviewService {
 	            .toList();
 	}
 
+	
+    /**
+     * 리뷰 ID로 단건 리뷰 정보를 조회합니다.
+     *
+     * @param reviewId 리뷰 ID
+     * @return 리뷰 응답 DTO
+     */
 	@Transactional(readOnly = true)
 	public ReviewResponseDto getReviewById(Long reviewId) {
 	    Review review = reviewRepository.findById(reviewId)
@@ -88,6 +136,15 @@ public class ReviewService {
 	    return ReviewResponseDto.from(review, imageUrls);
 	}
 
+	
+    /**
+     * 본인의 리뷰를 수정하고, 이미지도 새로 교체합니다.
+     *
+     * @param reviewId 리뷰 ID
+     * @param dto 수정 요청 DTO
+     * @param reviewer 수정 요청자
+     * @param imageFiles 새 이미지 리스트
+     */
 	@Transactional
 	public void updateReviewWithImages(Long reviewId, ReviewUpdateRequestDto dto, User reviewer, List<MultipartFile> imageFiles) {
 		Review review = reviewRepository.findById(reviewId)
@@ -107,6 +164,13 @@ public class ReviewService {
 		}
 	}
 
+	
+    /**
+     * 본인의 리뷰를 삭제하고, 이미지도 함께 삭제합니다.
+     *
+     * @param reviewId 리뷰 ID
+     * @param reviewer 삭제 요청자
+     */
 	@Transactional
 	public void deleteReview(Long reviewId, User reviewer) {
 		Review review = reviewRepository.findById(reviewId)
@@ -119,6 +183,13 @@ public class ReviewService {
 		reviewRepository.delete(review);
 	}
 
+	
+    /**
+     * 특정 사용자가 받은 리뷰 목록을 조회합니다.
+     *
+     * @param user 리뷰 대상 사용자
+     * @return 받은 리뷰 리스트
+     */
 	@Transactional(readOnly = true)
 	public List<ReviewResponseDto> getReviewsReceivedByUser(User user) {
 	    List<Review> reviews = reviewRepository.findByTarget(user);
@@ -132,6 +203,13 @@ public class ReviewService {
 	}
 
 
+	
+    /**
+     * 상품에 대한 평균 평점과 리뷰 개수를 조회합니다.
+     *
+     * @param productId 상품 ID
+     * @return 평점 평균 및 개수를 담은 DTO
+     */
 	@Transactional(readOnly = true)
 	public AverageRatingResponseDto getAverageRatingInfo(Long productId) {
 		List<Object[]> resultList = reviewRepository.findReviewCountAndAverageRatingByProductId(productId);

@@ -29,83 +29,73 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * UserController 사용자 인증 및 계정 관리와 관련된 API를 제공하는 컨트롤러입니다.
+ *
+ * [기능 설명] - 회원가입, 로그인(JWT 발급), 로그아웃 - 사용자 정보 조회 및 닉네임 수정 - 회원 탈퇴
+ *
+ * [보안] - `/signup`, `/login`은 인증 불필요 - `/logout`, `/me`, `/me(수정/삭제)`는 JWT 인증
+ * 필요 (`@AuthenticationPrincipal`을 통해 사용자 정보 추출)
+ *
+ * [인증 방식] - JWT는 httpOnly 쿠키에 저장되며, Swagger 테스트 시 "Authorize"로 헤더 인증 가능
+ *
+ * @author Daniel
+ * @since 2025.04.15
+ */
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 	private final UserService userService;
 
-	@Operation(
-		summary = "회원가입",
-		description = "이메일, 비밀번호, 닉네임을 통해 회원가입을 수행합니다."
-	)
+	// ──────────────── 인증 & 회원가입 ────────────────
+
+	@Operation(summary = "회원가입", description = "이메일, 비밀번호, 닉네임을 통해 회원가입을 수행합니다.")
 	@PostMapping("/signup")
 	public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
-	    SignUpResponse response = userService.signUp(request);
-	    return ResponseEntity.ok(response);
+		SignUpResponse response = userService.signUp(request);
+		return ResponseEntity.ok(response);
 	}
-	
-	@Operation(
-		summary = "로그인",
-		description = "이메일과 비밀번호를 통해 JWT 토큰을 발급받습니다."
-	)
+
+	@Operation(summary = "로그인", description = "이메일과 비밀번호를 통해 JWT 토큰을 발급받습니다.")
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
-	    LoginResponse loginResponse = userService.signIn(request);
+		LoginResponse loginResponse = userService.signIn(request);
 
-	    // JWT를 httpOnly 쿠키로 세팅
-	    ResponseCookie cookie = ResponseCookie.from("token", loginResponse.getToken())
-	            .httpOnly(true)
-	            .secure(false) // 배포 시 true (https)
-	            .path("/")
-	            .maxAge(60 * 60 * 24) // 1일
-	            .sameSite("Lax")
-	            .build();
+		// JWT를 httpOnly 쿠키로 세팅
+		ResponseCookie cookie = ResponseCookie.from("token", loginResponse.getToken()).httpOnly(true).secure(false) // 배포
+																													// 시
+																													// true
+																													// (https)
+				.path("/").maxAge(60 * 60 * 24) // 1일
+				.sameSite("Lax").build();
 
-	    return ResponseEntity.ok()
-	            .header(HttpHeaders.SET_COOKIE, cookie.toString())
-	            .body(Map.of(
-	            		"token", loginResponse.getToken(),
-	                    "email", loginResponse.getEmail(),
-	                    "nickname", loginResponse.getNickname()
-	            ));
+		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(Map.of("token",
+				loginResponse.getToken(), "email", loginResponse.getEmail(), "nickname", loginResponse.getNickname()));
 	}
 
-	@Operation(
-		    summary = "로그아웃",
-		    description = "JWT 쿠키를 삭제하여 로그아웃 처리합니다.",
-		    security = @SecurityRequirement(name = "bearerAuth")
-		)
-		@SecurityRequirement(name = "bearerAuth")
-		@PostMapping("/logout")
-		public ResponseEntity<Void> logout(HttpServletResponse response) {
-		    ResponseCookie deleteCookie = ResponseCookie.from("token", "")
-		            .path("/")
-		            .maxAge(0)
-		            .httpOnly(true)
-		            .build();
+	@Operation(summary = "로그아웃", description = "JWT 쿠키를 삭제하여 로그아웃 처리합니다.", security = @SecurityRequirement(name = "bearerAuth"))
+	@SecurityRequirement(name = "bearerAuth")
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletResponse response) {
+		ResponseCookie deleteCookie = ResponseCookie.from("token", "").path("/").maxAge(0).httpOnly(true).build();
 
-		    response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
 
-		    return ResponseEntity.noContent().build();
-		}
+		return ResponseEntity.noContent().build();
+	}
 
-	@Operation(
-		summary = "내 정보 조회",
-		description = "JWT 인증 토큰을 통해 로그인한 사용자의 정보를 조회합니다.",
-		security = @SecurityRequirement(name = "bearerAuth")
-	)
+	// ──────────────── 사용자 정보 관리 ────────────────
+	
+	@Operation(summary = "내 정보 조회", description = "JWT 인증 토큰을 통해 로그인한 사용자의 정보를 조회합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")
 	@GetMapping("/me")
 	public ResponseEntity<UserInfoResponse> getMyInfo(@AuthenticationPrincipal User user) {
 		return ResponseEntity.ok(userService.getMyInfo(user));
 	}
 
-	@Operation(
-		summary = "닉네임 변경",
-		description = "로그인한 사용자의 닉네임을 수정합니다.",
-		security = @SecurityRequirement(name = "bearerAuth")
-	)
+	@Operation(summary = "닉네임 변경", description = "로그인한 사용자의 닉네임을 수정합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")
 	@PatchMapping("/me")
 	public ResponseEntity<Void> updateNickname(@AuthenticationPrincipal User user,
@@ -114,11 +104,7 @@ public class UserController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(
-		summary = "회원 탈퇴",
-		description = "JWT 인증 토큰을 통해 로그인한 사용자의 계정을 삭제합니다.",
-		security = @SecurityRequirement(name = "bearerAuth")
-	)
+	@Operation(summary = "회원 탈퇴", description = "JWT 인증 토큰을 통해 로그인한 사용자의 계정을 삭제합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")
 	@DeleteMapping("/me")
 	public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal User user) {

@@ -2,6 +2,13 @@
 
 > **소비 분석 기반의 중고거래 & 예산 챗봇 플랫폼**  
 > 중고 거래와 지출 관리, 그리고 AI 예산 상담을 하나로 통합한 생활 밀착형 서비스
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1-brightgreen)
+![MySQL](https://img.shields.io/badge/DB-MySQL-blue)
+![Redis](https://img.shields.io/badge/Cache-Redis-red)
+![AWS](https://img.shields.io/badge/Infra-AWS-orange)
+![Swagger](https://img.shields.io/badge/API-Docs-yellow)
+![OpenAI](https://img.shields.io/badge/AI-ChatGPT-2ea44f)
 
 ---
 
