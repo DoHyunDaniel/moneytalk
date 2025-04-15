@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  *   DB에 사용자가 존재하면 불러오고, 없으면 자동으로 등록합니다.
  * - Spring Security에서 OAuth2User를 반환하여 인증 과정을 이어갑니다.
  *
- * @author Daniel
+ * @author 
  * @since 2025.04.15
  */
 @Service
@@ -70,3 +70,4 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 }
+
