@@ -1,7 +1,5 @@
 package com.example.moneytalk.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -14,13 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.moneytalk.config.JwtCookieProvider;
 import com.example.moneytalk.domain.User;
-import com.example.moneytalk.dto.LoginRequest;
-import com.example.moneytalk.dto.LoginResponse;
-import com.example.moneytalk.dto.SignUpRequest;
-import com.example.moneytalk.dto.SignUpResponse;
-import com.example.moneytalk.dto.UpdateNicknameRequest;
-import com.example.moneytalk.dto.UserInfoResponse;
+import com.example.moneytalk.dto.LoginRequestDto;
+import com.example.moneytalk.dto.LoginResponseDto;
+import com.example.moneytalk.dto.SignUpRequestDto;
+import com.example.moneytalk.dto.SignUpResponseDto;
+import com.example.moneytalk.dto.UpdateNicknameRequestDto;
+import com.example.moneytalk.dto.UserInfoResponseDto;
 import com.example.moneytalk.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,50 +47,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
 	private final UserService userService;
+	private final JwtCookieProvider jwtCookieProvider;
 
 	// ──────────────── 인증 & 회원가입 ────────────────
 
 	@Operation(summary = "회원가입", description = "이메일, 비밀번호, 닉네임을 통해 회원가입을 수행합니다.")
 	@PostMapping("/signup")
-	public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
-		SignUpResponse response = userService.signUp(request);
+	public ResponseEntity<SignUpResponseDto> signUp(@RequestBody @Valid SignUpRequestDto request) {
+		SignUpResponseDto response = userService.signUp(request);
 		return ResponseEntity.ok(response);
 	}
 
 	@Operation(summary = "로그인", description = "이메일과 비밀번호를 통해 JWT 토큰을 발급받습니다.")
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
-		LoginResponse loginResponse = userService.signIn(request);
+	public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto request, HttpServletResponse response) {
+		LoginResponseDto loginResponse = userService.signIn(request);
 
-		// JWT를 httpOnly 쿠키로 세팅
-		ResponseCookie cookie = ResponseCookie.from("token", loginResponse.getToken()).httpOnly(true).secure(false) // 배포
-																													// 시
-																													// true
-																													// (https)
-				.path("/").maxAge(60 * 60 * 24) // 1일
-				.sameSite("Lax").build();
+		ResponseCookie cookie = jwtCookieProvider.createTokenCookie(loginResponse.getToken());
 
-		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(Map.of("token",
-				loginResponse.getToken(), "email", loginResponse.getEmail(), "nickname", loginResponse.getNickname()));
+		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(loginResponse);
 	}
 
 	@Operation(summary = "로그아웃", description = "JWT 쿠키를 삭제하여 로그아웃 처리합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")
 	@PostMapping("/logout")
 	public ResponseEntity<Void> logout(HttpServletResponse response) {
-		ResponseCookie deleteCookie = ResponseCookie.from("token", "").path("/").maxAge(0).httpOnly(true).build();
-
+		ResponseCookie deleteCookie = jwtCookieProvider.deleteTokenCookie();
 		response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
-
 		return ResponseEntity.noContent().build();
 	}
 
 	// ──────────────── 사용자 정보 관리 ────────────────
-	
+
 	@Operation(summary = "내 정보 조회", description = "JWT 인증 토큰을 통해 로그인한 사용자의 정보를 조회합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")
 	@GetMapping("/me")
-	public ResponseEntity<UserInfoResponse> getMyInfo(@AuthenticationPrincipal User user) {
+	public ResponseEntity<UserInfoResponseDto> getMyInfo(@AuthenticationPrincipal User user) {
 		return ResponseEntity.ok(userService.getMyInfo(user));
 	}
 
@@ -99,7 +90,7 @@ public class UserController {
 	@SecurityRequirement(name = "bearerAuth")
 	@PatchMapping("/me")
 	public ResponseEntity<Void> updateNickname(@AuthenticationPrincipal User user,
-			@RequestBody @Valid UpdateNicknameRequest request) {
+			@RequestBody @Valid UpdateNicknameRequestDto request) {
 		userService.updateNickname(user, request.getNickname());
 		return ResponseEntity.noContent().build();
 	}

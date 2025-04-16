@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.moneytalk.domain.Review;
 import com.example.moneytalk.domain.User;
+import com.example.moneytalk.dto.ReviewStatsDto;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -15,13 +16,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	List<Review> findByProductId(Long productId);
 
-	List<Review> findByTarget(User user);
+	List<Review> findByReviewee(User user);
 
 	@Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.id = :productId")
 	Double findAverageRatingByProductId(@Param("productId") Long productId);
 
-	@Query("SELECT COUNT(r), AVG(r.rating) FROM Review r WHERE r.product.id = :productId")
-	List<Object[]> findReviewCountAndAverageRatingByProductId(@Param("productId") Long productId);
+	@Query("SELECT new com.example.moneytalk.dto.ReviewStatsDto(COUNT(r), COALESCE(AVG(r.rating), 0.0)) " +
+		       "FROM Review r WHERE r.product.id = :productId")
+		ReviewStatsDto findReviewStatsByProductId(@Param("productId") Long productId);
 	
 	long countByProductId(Long productId);
 

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import com.example.moneytalk.domain.Product;
-import com.example.moneytalk.dto.ProductSearchRequest;
+import com.example.moneytalk.dto.ProductSearchRequestDto;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -18,7 +18,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 	private final EntityManager em;
 
 	@Override
-	public List<Product> searchByConditions(ProductSearchRequest request) {
+	public List<Product> searchByConditions(ProductSearchRequestDto request) {
 		StringBuilder sb = new StringBuilder("SELECT p FROM Product p WHERE 1=1");
 
 		if (request.getKeyword() != null) {

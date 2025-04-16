@@ -1,21 +1,12 @@
 package com.example.moneytalk.domain;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "chat_rooms")
@@ -26,21 +17,42 @@ import lombok.Setter;
 @Builder
 public class ChatRoom {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "product_id", nullable = false)
+	private Product product;
 
-    @ManyToOne
-    @JoinColumn(name = "seller_id")
-    private User seller;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "seller_id", nullable = false)
+	private User seller;
 
-    @ManyToOne
-    @JoinColumn(name = "buyer_id")
-    private User buyer;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "buyer_id", nullable = false)
+	private User buyer;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
+
+	// 채팅방 확장 필드
+	private String lastMessage;
+
+	private LocalDateTime lastMessageAt;
+
+	private boolean isClosed;
+
+	// 양방향 매핑
+	@OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
+	private List<ChatMessage> messages;
+
+
+	// 정렬 쿼리에서 오류 미리 방지
+	@PrePersist
+	public void setDefaultLastMessageAt() {
+		if (this.lastMessageAt == null) {
+			this.lastMessageAt = LocalDateTime.now();
+		}
+	}
 }

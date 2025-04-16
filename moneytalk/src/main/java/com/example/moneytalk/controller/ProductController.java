@@ -20,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ProductRequestDto;
 import com.example.moneytalk.dto.ProductResponseDto;
-import com.example.moneytalk.dto.ProductSearchRequest;
-import com.example.moneytalk.dto.ProductStatusUpdateRequest;
+import com.example.moneytalk.dto.ProductSearchRequestDto;
+import com.example.moneytalk.dto.ProductStatusUpdateRequestDto;
 import com.example.moneytalk.dto.ReviewResponseDto;
 import com.example.moneytalk.exception.ErrorResponse;
 import com.example.moneytalk.service.FavoriteService;
@@ -93,7 +93,7 @@ public class ProductController {
 	@PatchMapping("/{id}/status")
 	public ResponseEntity<Void> updateProductStatus(
 	        @Parameter(name = "id", description = "상품 ID", example = "1") @PathVariable("id") Long id,
-	        @RequestBody @Valid ProductStatusUpdateRequest request,
+	        @RequestBody @Valid ProductStatusUpdateRequestDto request,
 	        @AuthenticationPrincipal User user) {
 	    productService.updateProductStatus(id, request.getStatus(), user);
 	    return ResponseEntity.noContent().build();
@@ -169,7 +169,7 @@ public class ProductController {
 	        @ApiResponse(responseCode = "400", description = "잘못된 요청")
 	})
 	@GetMapping("/search")
-	public ResponseEntity<List<ProductResponseDto>> searchProducts(@ModelAttribute ProductSearchRequest request) {
+	public ResponseEntity<List<ProductResponseDto>> searchProducts(@ModelAttribute ProductSearchRequestDto request) {
 	    List<ProductResponseDto> results = productService.searchProducts(request);
 	    return ResponseEntity.ok(results);
 	}

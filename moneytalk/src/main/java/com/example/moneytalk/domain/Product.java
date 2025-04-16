@@ -1,11 +1,14 @@
 package com.example.moneytalk.domain;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.example.moneytalk.type.ProductStatus;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -64,4 +68,9 @@ public class Product {
 
 	@CreationTimestamp
 	private LocalDateTime createdAt;
+	
+	// 확장 용이성을 위한 양방향 매핑 추가
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+	private List<ChatRoom> chatRooms = new ArrayList<>();
+
 }

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Getter
-public class ProductStatusUpdateRequest {
+public class ProductStatusUpdateRequestDto {
     @NotNull(message = "상품 상태를 입력해주세요.")
     private ProductStatus status;
 }

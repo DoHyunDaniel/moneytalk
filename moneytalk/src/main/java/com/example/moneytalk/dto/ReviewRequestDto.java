@@ -18,7 +18,7 @@ public class ReviewRequestDto {
 
     @Schema(description = "리뷰 대상 사용자 ID", example = "2")
     @NotNull(message = "리뷰 대상 사용자 ID는 필수입니다.")
-    private Long targetUserId;
+    private Long revieweeId;
 
     @Schema(description = "평점 (1~5)", example = "5", minimum = "1", maximum = "5")
     @Min(value = 1, message = "최소 평점은 1점입니다.")

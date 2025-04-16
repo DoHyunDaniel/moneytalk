@@ -67,6 +67,7 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
+		config.addAllowedOriginPattern("*"); // 모든 접근 허용
 		config.setAllowedOrigins(List.of("http://localhost:5173")); // 프론트 주소
 		config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));

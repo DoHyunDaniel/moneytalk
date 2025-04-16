@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+
+// 외부 응답용 (Swagger 문서화, API 응답)
 @Getter
 @Builder
 @AllArgsConstructor
@@ -15,8 +17,8 @@ public class AverageRatingResponseDto {
     private Long productId;
 
     @Schema(description = "리뷰 평균 평점", example = "4.5")
-    private double averageRating;
+    private Double averageRating;
 
     @Schema(description = "리뷰 개수", example = "10")
-    private long reviewCount;
+    private Long reviewCount;
 }

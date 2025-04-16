@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Schema(description = "상품 검색 요청 파라미터")
-public class ProductSearchRequest {
+public class ProductSearchRequestDto {
 
     @Schema(description = "검색 키워드 (제목 또는 설명 포함)", example = "노트북")
     private String keyword;

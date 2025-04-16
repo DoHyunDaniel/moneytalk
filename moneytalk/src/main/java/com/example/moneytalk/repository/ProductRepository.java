@@ -6,12 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.example.moneytalk.domain.Product;
-import com.example.moneytalk.dto.ProductSearchRequest;
+import com.example.moneytalk.dto.ProductSearchRequestDto;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
 
 	List<Product> findAllByOrderByCreatedAtDesc();
 
-	List<Product> searchByConditions(ProductSearchRequest request);
+	List<Product> searchByConditions(ProductSearchRequestDto request);
 }

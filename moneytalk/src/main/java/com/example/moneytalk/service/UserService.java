@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.moneytalk.config.JwtTokenProvider;
 import com.example.moneytalk.domain.User;
-import com.example.moneytalk.dto.LoginRequest;
-import com.example.moneytalk.dto.LoginResponse;
-import com.example.moneytalk.dto.SignUpRequest;
-import com.example.moneytalk.dto.SignUpResponse;
-import com.example.moneytalk.dto.UserInfoResponse;
+import com.example.moneytalk.dto.LoginRequestDto;
+import com.example.moneytalk.dto.LoginResponseDto;
+import com.example.moneytalk.dto.SignUpRequestDto;
+import com.example.moneytalk.dto.SignUpResponseDto;
+import com.example.moneytalk.dto.UserInfoResponseDto;
 import com.example.moneytalk.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class UserService {
      * @return 회원가입 결과 응답 DTO
      * @throws IllegalArgumentException 이미 등록된 이메일인 경우
      */
-	public SignUpResponse signUp(SignUpRequest request) {
+	public SignUpResponseDto signUp(SignUpRequestDto request) {
 	    if (userRepository.existsByEmail(request.getEmail())) {
 	        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
 	    }
@@ -60,7 +60,7 @@ public class UserService {
 
 	    User saved = userRepository.save(user);
 
-	    return new SignUpResponse(saved.getId(), saved.getEmail(), saved.getNickname());
+	    return new SignUpResponseDto(saved.getId(), saved.getEmail(), saved.getNickname());
 	}
 
 	
@@ -71,7 +71,7 @@ public class UserService {
      * @return JWT 토큰, 이메일, 닉네임을 포함한 응답 DTO
      * @throws IllegalArgumentException 이메일 존재 여부 또는 비밀번호 불일치 시
      */
-	public LoginResponse signIn(LoginRequest request) {
+	public LoginResponseDto signIn(LoginRequestDto request) {
 	    User user = userRepository.findByEmail(request.getEmail())
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
 
@@ -81,7 +81,7 @@ public class UserService {
 
 	    String token = jwtTokenProvider.createToken(user.getId(), user.getEmail());
 
-	    return new LoginResponse(token, user.getEmail(), user.getNickname());
+	    return new LoginResponseDto(token, user.getEmail(), user.getNickname());
 	}
 	
 	
@@ -91,8 +91,8 @@ public class UserService {
      * @param user 인증된 사용자 객체
      * @return 사용자 정보 응답 DTO (id, email, nickname)
      */
-	public UserInfoResponse getMyInfo(User user) {
-	    return new UserInfoResponse(user.getId(), user.getEmail(), user.getNickname());
+	public UserInfoResponseDto getMyInfo(User user) {
+	    return new UserInfoResponseDto(user.getId(), user.getEmail(), user.getNickname());
 	}
 
 	

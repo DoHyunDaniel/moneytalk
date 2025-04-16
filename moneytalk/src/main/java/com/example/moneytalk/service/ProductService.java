@@ -17,7 +17,7 @@ import com.example.moneytalk.domain.PurchaseRecord;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ProductRequestDto;
 import com.example.moneytalk.dto.ProductResponseDto;
-import com.example.moneytalk.dto.ProductSearchRequest;
+import com.example.moneytalk.dto.ProductSearchRequestDto;
 import com.example.moneytalk.repository.LedgerRepository;
 import com.example.moneytalk.repository.ProductImageRepository;
 import com.example.moneytalk.repository.ProductRepository;
@@ -162,7 +162,7 @@ public class ProductService {
      * @param request 검색 조건 DTO
      * @return 검색된 상품 리스트
      */
-	public List<ProductResponseDto> searchProducts(ProductSearchRequest request) {
+	public List<ProductResponseDto> searchProducts(ProductSearchRequestDto request) {
 		List<Product> products = productRepository.searchByConditions(request);
 
 		return products.stream().map(product -> {

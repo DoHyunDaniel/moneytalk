@@ -40,8 +40,8 @@ public class Review {
 	private User reviewer;
 
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "target_id", nullable = false)
-	private User target;
+	@JoinColumn(name = "reviewee_id", nullable = false)
+	private User reviewee;
 
 	@Column(nullable = false)
 	private Integer rating;

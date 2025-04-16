@@ -53,14 +53,17 @@ public class FavoriteService {
         if (existing.isPresent()) {
             favoriteRepo.delete(existing.get());
             return false; // 찜 해제
-        } else {
-            favoriteRepo.save(FavoriteProduct.builder()
-                    .user(user)
-                    .product(product)
-                    .build());
-            return true; // 찜 추가
         }
+
+        FavoriteProduct newFavorite = FavoriteProduct.builder()
+            .user(user)
+            .product(product)
+            .build();
+
+        favoriteRepo.save(newFavorite);
+        return true; // 찜 추가
     }
+
 
     /**
      * 특정 상품에 대해 찜(좋아요)을 누른 사용자 수를 반환합니다.

@@ -24,7 +24,7 @@ public class ReviewResponseDto {
     private Long reviewerId;
     
     @Schema(description = "리뷰 대상자 ID", example = "1")
-    private Long targetId;
+    private Long revieweeId;
     
     @Schema(description = "리뷰 작성자 닉네임", example = "david123")
     private String reviewerNickname;
@@ -46,7 +46,7 @@ public class ReviewResponseDto {
                 .reviewId(review.getId())
                 .productId(review.getProduct().getId())
                 .reviewerId(review.getReviewer().getId())
-                .targetId(review.getTarget().getId())
+                .revieweeId(review.getReviewee().getId())
                 .rating(review.getRating())
                 .content(review.getContent())
                 .createdAt(review.getCreatedAt())

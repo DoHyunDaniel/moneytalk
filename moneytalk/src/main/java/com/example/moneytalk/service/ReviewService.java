@@ -13,6 +13,7 @@ import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.AverageRatingResponseDto;
 import com.example.moneytalk.dto.ReviewRequestDto;
 import com.example.moneytalk.dto.ReviewResponseDto;
+import com.example.moneytalk.dto.ReviewStatsDto;
 import com.example.moneytalk.dto.ReviewUpdateRequestDto;
 import com.example.moneytalk.repository.ProductRepository;
 import com.example.moneytalk.repository.ReviewRepository;
@@ -79,7 +80,7 @@ public class ReviewService {
 			throw new IllegalStateException("해당 상품은 아직 거래 완료되지 않았습니다.");
 		}
 
-		if (reviewer.getId().equals(dto.getTargetUserId())) {
+		if (reviewer.getId().equals(dto.getRevieweeId())) {
 			throw new IllegalArgumentException("자기 자신에게는 리뷰를 작성할 수 없습니다.");
 		}
 
@@ -88,10 +89,10 @@ public class ReviewService {
 			throw new IllegalStateException("이미 리뷰를 작성한 상품입니다.");
 		}
 
-		User target = userRepository.findById(dto.getTargetUserId())
+		User reviewee = userRepository.findById(dto.getRevieweeId())
 				.orElseThrow(() -> new IllegalArgumentException("대상 유저가 존재하지 않습니다."));
 
-		Review review = Review.builder().product(product).reviewer(reviewer).target(target).rating(dto.getRating())
+		Review review = Review.builder().product(product).reviewer(reviewer).reviewee(reviewee).rating(dto.getRating())
 				.content(dto.getContent()).build();
 
 		reviewRepository.save(review);
@@ -192,7 +193,7 @@ public class ReviewService {
      */
 	@Transactional(readOnly = true)
 	public List<ReviewResponseDto> getReviewsReceivedByUser(User user) {
-	    List<Review> reviews = reviewRepository.findByTarget(user);
+	    List<Review> reviews = reviewRepository.findByReviewee(user);
 
 	    return reviews.stream()
 	            .map(review -> {
@@ -212,18 +213,16 @@ public class ReviewService {
      */
 	@Transactional(readOnly = true)
 	public AverageRatingResponseDto getAverageRatingInfo(Long productId) {
-		List<Object[]> resultList = reviewRepository.findReviewCountAndAverageRatingByProductId(productId);
+	    ReviewStatsDto stats = reviewRepository.findReviewStatsByProductId(productId);
 
 		Long count = 0L;
 		Double avg = 0.0;
 
-		if (!resultList.isEmpty()) {
-			Object[] result = resultList.get(0);
-			count = result[0] != null ? ((Number) result[0]).longValue() : 0L;
-			avg = result[1] != null ? ((Number) result[1]).doubleValue() : 0.0;
-		}
-
-		return AverageRatingResponseDto.builder().productId(productId).averageRating(avg).reviewCount(count).build();
+	    return AverageRatingResponseDto.builder()
+	            .productId(productId)
+	            .averageRating(stats.getAverageRating())
+	            .reviewCount(stats.getReviewCount())
+	            .build();
 	}
 	
 
