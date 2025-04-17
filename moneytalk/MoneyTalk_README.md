@@ -295,6 +295,26 @@ Table favorite_products {
   - `result[0]`와 `result[1]`을 각각 `Number`로 캐스팅 후  
     `.longValue()` / `.doubleValue()`로 변환하여 사용
 
+
+## 🔧 리팩토링 이력 (피드백 기반)
+
+### ✅ 1. 명시적 응답 타입 적용 (`ResponseEntity`)
+- `<?>` 사용 대신 `ResponseEntity<LoginResponse>` 명확화
+
+### ✅ 2. JWT 쿠키 처리 로직 분리 (`JwtCookieProvider`)
+- 쿠키 발급/삭제 로직을 별도 컴포넌트로 추출
+- 환경 변수(`COOKIE_SECURE`) 기반 secure 동적 제어
+
+### ✅ 3. 리뷰 통계 응답 구조 개선
+- `Object[]` 반환 제거 → `ReviewStatsDto`로 직접 DTO 매핑
+- 응답용 DTO는 `AverageRatingResponseDto`로 분리
+
+### ✅ 4. 도메인 필드 및 네이밍 통일
+- `Review.target` → `reviewee`로 리팩토링
+- 컬럼명도 `target_id` → `reviewee_id`로 변경
+- 외래 키 이름도 `fk_reviews_reviewee`로 재설정
+
+
 ## 🚧 다음 목표 (예정)
 
 - 🔍 **상품 검색 및 필터 기능 추가**  

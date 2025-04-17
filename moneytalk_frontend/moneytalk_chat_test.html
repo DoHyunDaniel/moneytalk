@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+  <h2>🧪 MoneyTalk 실시간 채팅 테스트</h2>
+  <input type="text" id="msg" placeholder="메시지를 입력하세요" />
+  <button id="sendBtn">보내기</button>
+
+  <ul id="chatLog"></ul>
+
+  <script>
+    const socket = new SockJS("http://localhost:8080/ws-chat");
+    const stompClient = Stomp.over(socket);
+    const roomId = 1; // 테스트용 채팅방 ID
+    const senderId = 1; // 로그인한 사용자 ID
+    const senderNickname = "daniel"; // 닉네임
+
+    stompClient.connect({}, () => {
+      stompClient.subscribe("/sub/chat/room/" + roomId, (msg) => {
+        const body = JSON.parse(msg.body);
+        const log = document.createElement("li");
+        log.innerText = `[${body.senderNickname}] ${body.message}`;
+        document.getElementById("chatLog").appendChild(log);
+      });
+
+      document.getElementById("sendBtn").onclick = () => {
+        const message = document.getElementById("msg").value;
+        if (!message) return;
+
+        stompClient.send("/pub/chat/message", {}, JSON.stringify({
+          chatRoomId: roomId,
+          senderId: senderId,
+          senderNickname: senderNickname,
+          message: message,
+          type: "TEXT"
+        }));
+
+        document.getElementById("msg").value = "";
+      };
+    });
+  </script>
+</body>
+</html>
