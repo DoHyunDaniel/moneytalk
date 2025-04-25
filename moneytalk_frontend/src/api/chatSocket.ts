@@ -1,29 +1,73 @@
-// Polyfill for `global` in browser environments
+import SockJS from "sockjs-client";
+import { Client, IMessage, Stomp } from "@stomp/stompjs";
+
+// Polyfill (브라우저 환경 대응)
 if (typeof global === "undefined") {
   (window as any).global = window;
 }
 
-import SockJS from "sockjs-client";
-import { Client, Stomp } from "@stomp/stompjs";
-
 let stompClient: Client;
 
-export const connectChatSocket = (
-  roomId: number,
-  onMessage: (msg: any) => void
-) => {
+export interface SocketOptions {
+  roomId: number;
+  onMessage: (msg: any) => void;
+  onConnectChange?: (status: "CONNECTED" | "RECONNECTING" | "DISCONNECTED") => void;
+  onDisconnectForced?: () => void;
+  onReconnectSuccess?: () => void; // ✅ NEW
+}
+
+export const connectChatSocket = ({
+  roomId,
+  onMessage,
+  onConnectChange,
+  onDisconnectForced,
+  onReconnectSuccess,
+}: SocketOptions): () => void => {
   const socket = new SockJS("http://localhost:8080/ws-chat");
-  stompClient = Stomp.over(socket);
+  stompClient = Stomp.over(()=>socket);
+  stompClient.debug = () => {};
+  stompClient.reconnectDelay = 5000; // 자동 재연결 딜레이
+
+  let wasDisconnected = false;
+  let unsubscribeFn = () => {};
 
   stompClient.onConnect = () => {
-    stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg) => {
+    onConnectChange?.("CONNECTED");
+
+    if (wasDisconnected && onReconnectSuccess) {
+      onReconnectSuccess(); // ✅ 재연결 성공 시 알림
+      wasDisconnected = false;
+    }
+
+    const subscription = stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg: IMessage) => {
       const body = JSON.parse(msg.body);
-      console.log("📥 메시지 수신:", body); // 이게 뜨면 성공!
       onMessage(body);
     });
+
+    unsubscribeFn = () => {
+      subscription.unsubscribe();
+      stompClient.deactivate();
+      onConnectChange?.("DISCONNECTED");
+    };
   };
+
+  stompClient.onWebSocketClose = () => {
+    onConnectChange?.("RECONNECTING");
+    wasDisconnected = true;
+
+    if (!stompClient.connected && onDisconnectForced) {
+      onDisconnectForced();
+    }
+  };
+
   stompClient.activate();
+
+  return () => {
+    unsubscribeFn();
+  };
 };
+
+
 
 export const sendChatMessage = (data: {
   chatRoomId: number;
@@ -39,3 +83,4 @@ export const sendChatMessage = (data: {
     body: JSON.stringify(data),
   });
 };
+

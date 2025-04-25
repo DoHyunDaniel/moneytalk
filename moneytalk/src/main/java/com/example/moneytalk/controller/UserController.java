@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.moneytalk.config.JwtCookieProvider;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.LoginRequestDto;
 import com.example.moneytalk.dto.LoginResponseDto;
+import com.example.moneytalk.dto.NicknameSuggestionResponseDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.dto.SignUpResponseDto;
 import com.example.moneytalk.dto.UpdateNicknameRequestDto;
@@ -58,6 +60,13 @@ public class UserController {
 		return ResponseEntity.ok(response);
 	}
 
+	@Operation(summary = "새로운 닉네임 추천", description = "회원가입 시 닉네임이 중복될 경우 새로운 닉네임을 추천합니다.")
+	@GetMapping("/suggest-nickname")
+	public ResponseEntity<NicknameSuggestionResponseDto> suggestNickname(
+	        @RequestParam("base") String base) {
+	    return ResponseEntity.ok(userService.suggestNickname(base));
+	}
+	
 	@Operation(summary = "로그인", description = "이메일과 비밀번호를 통해 JWT 토큰을 발급받습니다.")
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto request, HttpServletResponse response) {
@@ -67,6 +76,7 @@ public class UserController {
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(loginResponse);
 	}
+
 
 	@Operation(summary = "로그아웃", description = "JWT 쿠키를 삭제하여 로그아웃 처리합니다.", security = @SecurityRequirement(name = "bearerAuth"))
 	@SecurityRequirement(name = "bearerAuth")

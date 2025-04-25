@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,6 +111,34 @@ public class ProductController {
 	        @PathVariable("productId") Long productId) {
 	    return ResponseEntity.ok(productService.getProductById(productId));
 	}
+
+	@Operation(
+		    summary = "상품 이미지 추가 업로드",
+		    description = """
+		        기존에 등록된 상품에 이미지를 추가로 업로드합니다.  
+		        `thumbnailIndex` 값을 지정하면 해당 인덱스의 이미지가 대표 이미지(썸네일)로 설정됩니다.  
+		        이미지는 최대 5장까지 권장합니다.
+		        """,
+		    security = @SecurityRequirement(name = "bearerAuth")
+		)
+		@ApiResponses(value = {
+		    @ApiResponse(responseCode = "200", description = "이미지 업로드 성공"),
+		    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+		    @ApiResponse(responseCode = "401", description = "JWT 인증 실패"),
+		    @ApiResponse(responseCode = "404", description = "상품이 존재하지 않음")
+		})
+		@PostMapping(value = "/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+		public ResponseEntity<Void> uploadProductImages(
+		        @Parameter(name = "productId", description = "상품 ID", example = "1")
+		        @PathVariable Long productId,
+		        @Parameter(description = "추가할 이미지 파일들 (최소 1장 이상)", required = true)
+		        @RequestPart("images") List<MultipartFile> images,
+		        @Parameter(description = "대표 이미지로 지정할 인덱스 (0부터 시작)", example = "0")
+		        @RequestParam(value = "thumbnailIndex", required = false) Integer thumbnailIndex) {
+
+		    productImageService.uploadProductImages(productId, images, thumbnailIndex);
+		    return ResponseEntity.ok().build();
+		}
 
 	
 	// ────────────────── 찜하기 기능 ──────────────────

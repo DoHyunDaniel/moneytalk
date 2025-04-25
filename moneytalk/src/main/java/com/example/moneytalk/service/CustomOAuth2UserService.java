@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.repository.UserRepository;
+import com.example.moneytalk.type.UserType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,7 +61,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .email(email)
                 .nickname(name)
                 .password("") // 소셜 로그인은 비밀번호 X
-                .role("USER")
+                .role(UserType.USER)
                 .build()));
 
         return new DefaultOAuth2User(

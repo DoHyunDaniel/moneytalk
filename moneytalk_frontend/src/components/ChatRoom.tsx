@@ -1,54 +1,189 @@
-import { useEffect, useState } from 'react';
-import {
-  connectChatSocket,
-  sendChatMessage,
-} from '../api/chatSocket';
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { connectChatSocket, sendChatMessage } from "../api/chatSocket";
+import { fetchChatMessages, markMessagesAsRead } from "../api/chatApi";
+import { logout, getMyInfo } from "../api/auth";
+import { format } from "date-fns";
+
+interface ChatMessage {
+  chatRoomId: number;
+  senderId: number;
+  senderNickname: string;
+  message: string;
+  type: string;
+  imageUrl?: string;
+  sentAt: string;
+}
 
 const ChatRoom = () => {
-  const [messages, setMessages] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+  const { roomId } = useParams<{ roomId: string }>();
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState<
+    "CONNECTED" | "DISCONNECTED" | "RECONNECTING"
+  >("DISCONNECTED");
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const roomId = 1;
-  const senderId = 3;
-  const senderNickname = '민수';
-
-  useEffect(() => {
-    connectChatSocket(roomId, (msg) => {
-      setMessages((prev) => [
-        ...prev,
-        msg.imageUrl
-          ? `[${msg.senderNickname}] [이미지: ${msg.imageUrl}]`
-          : `[${msg.senderNickname}] ${msg.message}`,
-      ]);
-    });
-  }, []);
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-    sendChatMessage({
-      chatRoomId: roomId,
-      senderId,
-      senderNickname,
-      message: input,
-      type: 'TEXT',
-    });
-    setInput('');
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 30);
   };
 
+  useEffect(() => {
+    getMyInfo()
+      .then((res) => {
+        console.log("✅ getMyInfo 결과:", res);
+        setCurrentUserId(res.userId);
+        console.log("✅ 로그인한 사용자 ID:", res.userId);
+      })
+      .catch(() => alert("로그인 정보 확인 실패"));
+  }, []);
+
+  useEffect(() => {
+    if (!roomId || currentUserId === null) return;
+
+    fetchChatMessages(Number(roomId)).then((data) => {
+      setMessages(data);
+      markMessagesAsRead(Number(roomId)).catch(() => {
+        console.warn("읽음 처리 실패");
+      });
+      scrollToBottom();
+    });
+
+    const unsubscribe = connectChatSocket({
+      roomId: Number(roomId),
+      onMessage: (msg) => {
+        setMessages((prev) => [...prev, msg]);
+        scrollToBottom();
+      },
+      onConnectChange: setConnectionStatus,
+      onDisconnectForced: async () => {
+        alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+        await logout();
+        navigate("/login");
+      },
+      onReconnectSuccess: () => {
+        alert("소켓 연결이 복구되었습니다!");
+      },
+    });
+
+    return () => unsubscribe();
+  }, [roomId, currentUserId]);
+
+  const handleSend = () => {
+    if (
+      !input.trim() ||
+      !roomId ||
+      connectionStatus !== "CONNECTED" ||
+      currentUserId === null
+    ) {
+      alert("메시지를 보내려면 먼저 서버와 연결되어야 합니다.");
+      return;
+    }
+
+    console.log("📨 보내는 사용자 ID:", currentUserId);
+
+    sendChatMessage({
+      chatRoomId: Number(roomId),
+      senderId: currentUserId,
+      senderNickname: "",
+      message: input,
+      type: "TEXT",
+    });
+    setInput("");
+  };
+
+  if (currentUserId === null) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+    );
+  }
+
   return (
-    <div>
-      <h2>💬 채팅방</h2>
-      <ul>
-        {messages.map((m, i) => (
-          <li key={i}>{m}</li>
-        ))}
-      </ul>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="메시지 입력"
-      />
-      <button onClick={handleSend}>보내기</button>
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
+      <h2>💬 채팅방 #{roomId}</h2>
+      <div style={{ marginBottom: "8px", fontSize: "14px", color: "#555" }}>
+        연결 상태: <b>{connectionStatus}</b>
+      </div>
+
+      <div
+        style={{
+          maxHeight: "400px",
+          overflowY: "auto",
+          padding: "12px",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          marginBottom: "12px",
+          background: "#fafafa",
+        }}
+      >
+        {messages.map((msg, idx) => {
+          const isMine = Number(msg.senderId) === Number(currentUserId);
+          console.log(
+            `📥 받은 메시지 senderId: ${msg.senderId}, currentUserId: ${currentUserId}, isMine: ${isMine}`
+          );
+
+          return (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                justifyContent: isMine ? "flex-end" : "flex-start",
+                marginBottom: "12px",
+              }}
+            >
+              <div
+                style={{
+                  background: isMine ? "#dcf8c6" : "#fff",
+                  padding: "8px 12px",
+                  borderRadius: "16px",
+                  maxWidth: "75%",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ fontSize: "14px" }}>{msg.message}</div>
+                <div
+                  style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}
+                >
+                  {format(new Date(msg.sentAt), "yy.MM.dd HH:mm")}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div ref={scrollRef} />
+      </div>
+
+      <div style={{ display: "flex", gap: "8px" }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="메시지 입력"
+          style={{
+            flex: 1,
+            padding: "8px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+        />
+        <button
+          onClick={handleSend}
+          style={{
+            padding: "8px 16px",
+            background: "#007bff",
+            color: "#fff",
+            borderRadius: "8px",
+            border: "none",
+          }}
+        >
+          보내기
+        </button>
+      </div>
     </div>
   );
 };

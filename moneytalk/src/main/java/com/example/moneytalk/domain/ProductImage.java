@@ -40,4 +40,8 @@ public class ProductImage {
     
     @CreationTimestamp
     private LocalDateTime createdAt;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isThumbnail = false;
 }

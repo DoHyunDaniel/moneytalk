@@ -1,5 +1,8 @@
 package com.example.moneytalk.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -7,10 +10,12 @@ import com.example.moneytalk.config.JwtTokenProvider;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.LoginRequestDto;
 import com.example.moneytalk.dto.LoginResponseDto;
+import com.example.moneytalk.dto.NicknameSuggestionResponseDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.dto.SignUpResponseDto;
 import com.example.moneytalk.dto.UserInfoResponseDto;
 import com.example.moneytalk.repository.UserRepository;
+import com.example.moneytalk.type.UserType;
 
 import lombok.RequiredArgsConstructor;
 /**
@@ -44,23 +49,47 @@ public class UserService {
      *
      * @param request 회원가입 요청 DTO (이메일, 비밀번호, 닉네임 포함)
      * @return 회원가입 결과 응답 DTO
-     * @throws IllegalArgumentException 이미 등록된 이메일인 경우
+     * @throws IllegalArgumentException 이미 등록된 이메일인 경우 또는 닉네임이 중복된 경우
      */
 	public SignUpResponseDto signUp(SignUpRequestDto request) {
 	    if (userRepository.existsByEmail(request.getEmail())) {
 	        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
 	    }
 
+	    // 닉네임 중복 체크
+	    if (userRepository.existsByNickname(request.getNickname())) {
+	        throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+	    }
+
 	    User user = User.builder()
 	            .email(request.getEmail())
 	            .password(passwordEncoder.encode(request.getPassword()))
 	            .nickname(request.getNickname())
-	            .role("USER")
+	            .role(UserType.USER)
+	            .profileImageUrl("https://moneytalk-images-2025.s3.us-east-1.amazonaws.com/defaults/default-profile.png")
 	            .build();
 
 	    User saved = userRepository.save(user);
 
 	    return new SignUpResponseDto(saved.getId(), saved.getEmail(), saved.getNickname());
+	}
+
+	
+	public NicknameSuggestionResponseDto suggestNickname(String base) {
+	    boolean isAvailable = !userRepository.existsByNickname(base);
+
+	    List<String> suggestions = new ArrayList<>();
+
+	    if (!isAvailable) {
+	        for (int i = 1; suggestions.size() < 5; i++) {
+	            String candidate = base + i;
+	            if (!userRepository.existsByNickname(candidate)) {
+	                suggestions.add(candidate);
+	            }
+	        }
+	    }
+
+	    return new NicknameSuggestionResponseDto(base, isAvailable, suggestions);
 	}
 
 	

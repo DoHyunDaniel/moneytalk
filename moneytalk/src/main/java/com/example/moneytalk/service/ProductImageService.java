@@ -3,7 +3,12 @@ package com.example.moneytalk.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.moneytalk.config.S3Uploader;
+import com.example.moneytalk.domain.Product;
+import com.example.moneytalk.domain.ProductImage;
 import com.example.moneytalk.repository.ProductImageRepository;
 import com.example.moneytalk.repository.ProductRepository;
 
@@ -26,7 +31,8 @@ public class ProductImageService {
 
     private final ProductImageRepository productImageRepository;
     private final ProductRepository productRepository;
-
+    private final S3Uploader s3Uploader;
+    
     /**
      * 주어진 상품 ID에 해당하는 이미지 URL 목록을 반환합니다.
      *
@@ -45,4 +51,34 @@ public class ProductImageService {
                 .map(image -> image.getImageUrl())
                 .toList();
     }
+    
+    @Transactional
+    public void uploadProductImages(Long productId, List<MultipartFile> images, Integer thumbnailIndex) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+
+        for (int i = 0; i < images.size(); i++) {
+            MultipartFile file = images.get(i);
+            String imageUrl = s3Uploader.uploadFile(file, "products");
+
+            boolean isThumbnail = (thumbnailIndex != null && i == thumbnailIndex);
+
+            ProductImage image = ProductImage.builder()
+                .product(product)
+                .imageUrl(imageUrl)
+                .isThumbnail(isThumbnail)
+                .build();
+
+            productImageRepository.save(image);
+        }
+
+        // 만약 사용자가 대표 이미지를 지정하지 않은 경우 → 첫 번째 이미지를 대표로 설정
+        if (thumbnailIndex == null && !images.isEmpty()) {
+            List<ProductImage> savedImages = productImageRepository.findByProduct(product);
+            if (!savedImages.isEmpty()) {
+                savedImages.get(0).setThumbnail(true);
+            }
+        }
+    }
+
 }

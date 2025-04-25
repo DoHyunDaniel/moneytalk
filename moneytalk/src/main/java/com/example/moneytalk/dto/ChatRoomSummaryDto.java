@@ -6,19 +6,25 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChatRoomSummaryDto {
 
-    private Long chatRoomId;
-    private String productTitle;
-    private String lastMessage;
-    private LocalDateTime lastMessageAt;
-    private String opponentNickname;
-    private int unreadCount;
+	private Long chatRoomId;
+	private Long productId;
+	private String productTitle;
+	private String productThumbnailUrl;
+
+	private String opponentNickname;
+	private String opponentProfileImage;
+
+	private String lastMessage;
+	private LocalDateTime lastMessageAt;
+	private boolean isClosed;
+	private Long opponentUserId;
+
+	private int unreadCount;
 }

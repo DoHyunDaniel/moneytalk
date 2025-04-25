@@ -57,8 +57,13 @@ public class ChatMessage {
     @CreationTimestamp
     private LocalDateTime sentAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false)
+    private User receiver;
+    
     // 읽음 여부
-    private boolean isRead;
+    @Column(name = "is_read")
+    private boolean isRead = false;
 
     // 삭제 상태 (확장 가능)
     private boolean isDeletedBySender;

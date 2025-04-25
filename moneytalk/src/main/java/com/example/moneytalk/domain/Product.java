@@ -72,5 +72,17 @@ public class Product {
 	// 확장 용이성을 위한 양방향 매핑 추가
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 	private List<ChatRoom> chatRooms = new ArrayList<>();
+	
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ProductImage> images = new ArrayList<>();
+
+	public String getThumbnailUrl() {
+	    return images.stream()
+	            .filter(ProductImage::isThumbnail)
+	            .map(ProductImage::getImageUrl)
+	            .findFirst()
+	            .orElse(images.isEmpty() ? null : images.get(0).getImageUrl());
+	}
+
 
 }

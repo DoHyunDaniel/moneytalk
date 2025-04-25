@@ -99,16 +99,13 @@ public class ProductService {
      * @throws IllegalArgumentException 상품이 존재하지 않을 경우
      */
 	public ProductResponseDto getProductById(Long productId) {
-		Product product = productRepository.findById(productId)
+		Product product = productRepository.findWithUserById(productId)
 				.orElseThrow(() -> new IllegalArgumentException("해당 상품을 찾을 수 없습니다."));
 
 		List<String> imageUrls = productImageRepository.findByProduct(product).stream().map(ProductImage::getImageUrl)
 				.toList();
 
-		return ProductResponseDto.builder().id(product.getId()).title(product.getTitle())
-				.description(product.getDescription()).price(product.getPrice()).category(product.getCategory())
-				.location(product.getLocation()).status(product.getStatus()).createdAt(product.getCreatedAt())
-				.sellerNickname(product.getUser().getNickname()).images(imageUrls).build();
+		return ProductResponseDto.from(product, imageUrls);
 	}
 
     /**

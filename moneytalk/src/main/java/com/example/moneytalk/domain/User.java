@@ -11,12 +11,18 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.example.moneytalk.type.UserType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,61 +39,72 @@ import lombok.Setter;
 @Builder
 public class User implements UserDetails {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
+	@Column(nullable = false, unique = true, length = 100)
+	private String email;
 
-    @Column(nullable = false)
-    private String password;
+	@JsonIgnore
+	@Column(nullable = false)
+	private String password;
 
-    @Column(nullable = false, length = 30)
-    private String nickname;
+	@Column(nullable = false, unique = true, length = 30)
+	private String nickname;
 
-    @Column(nullable = false)
-    private String role = "USER";
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	@Builder.Default
+	private UserType role = UserType.USER;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
 
-    // 1. Spring Security 권한 정보 반환
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(
-            new SimpleGrantedAuthority("ROLE_" + this.role)
-        );
-    }
+	// 디폴트 이미지 적용
+	// 디폴트 이미지 미정
+	@Column(nullable = true)
+	private String profileImageUrl;
 
-    // 2. 로그인 식별자 (username) → 이메일 사용
-    @Override
-    public String getUsername() {
-        return this.email;
-    }
 
-    // 3. 계정 상태 기본 설정 (모두 true)
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-    
-    // 양방향 매핑 추가
-    @OneToMany(mappedBy = "seller")
-    private List<ChatRoom> sellChatRooms = new ArrayList<>();
+	// 1. Spring Security 권한 정보 반환
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
+	}
 
-    @OneToMany(mappedBy = "buyer")
-    private List<ChatRoom> buyChatRooms = new ArrayList<>();
+	// 2. 로그인 식별자 (username) → 이메일 사용
+	@Override
+	public String getUsername() {
+		return this.email;
+	}
+
+	// 3. 계정 상태 기본 설정 (모두 true)
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
+
+	// 양방향 매핑 추가
+	@OneToMany(mappedBy = "seller")
+	private List<ChatRoom> sellChatRooms = new ArrayList<>();
+
+	@OneToMany(mappedBy = "buyer")
+	private List<ChatRoom> buyChatRooms = new ArrayList<>();
 
 }
