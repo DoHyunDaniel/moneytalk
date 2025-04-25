@@ -57,4 +57,11 @@ public class Ledger {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+    
+    @Column(length = 20)
+    private String paymentMethod; // 예: 카드, 현금 등 (선택사항)
+
+    @Column(length = 100)
+    private String tag; // 예: "식비/카페/스타벅스" (카테고리 구체화 or 태깅용)
+
 }

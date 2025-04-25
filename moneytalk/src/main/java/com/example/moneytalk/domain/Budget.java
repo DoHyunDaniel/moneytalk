@@ -42,4 +42,7 @@ public class Budget {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+    
+    @Column(length = 30)
+    private String category; // ex) "식비", null이면 전체 예산
 }

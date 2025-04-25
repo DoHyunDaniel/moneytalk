@@ -331,6 +331,138 @@ Table favorite_products {
   - `result[0]`와 `result[1]`을 각각 `Number`로 캐스팅 후  
     `.longValue()` / `.doubleValue()`로 변환하여 사용
 
+
+## 📦 3주차 - 실시간 채팅 기능
+
+### ✅ 기능 개요
+- 상품 상세 페이지에서 판매자와 1:1 채팅방 생성
+- STOMP 기반 WebSocket 연결로 실시간 채팅 메시지 송수신
+- Redis 없이 순수 STOMP 기반 실시간 전송 처리
+- 메시지 읽음 처리, 채팅방 목록 조회, 마지막 메시지 요약 기능 포함
+- 채팅방 Soft Delete(사용자별 삭제) 및 재접속 자동 복구 로직 구현
+
+---
+
+### 🧩 주요 API 목록
+
+| 메서드 | URL | 설명 |
+|--------|-----|------|
+| `POST` | `/api/chatrooms/{productId}` | 채팅방 생성 (구매자 ↔ 판매자) |
+| `GET` | `/api/chatrooms` | 내 채팅방 목록 조회 |
+| `GET` | `/api/chatrooms/{chatRoomId}/messages` | 채팅방 내 메시지 조회 |
+| `PATCH` | `/api/chatrooms/{chatRoomId}/read` | 메시지 읽음 처리 |
+| `DELETE` | `/api/chatrooms/{chatRoomId}/leave` | 채팅방 나가기 (Soft Delete) |
+| `GET` | `/api/chatrooms/{chatRoomId}/detail` | 채팅방 상세 정보 조회 |
+| `POST` | `/chatrooms/{roomId}/image` | 채팅 이미지 업로드 (S3 연동) |
+| `@MessageMapping("/chat/message")` | WebSocket 메시지 송신 |
+
+---
+
+### 🧱 기술 스택 및 라이브러리
+
+- Spring Boot 3.x  
+- WebSocket + STOMP (`spring-boot-starter-websocket`)  
+- SockJS + STOMP.js (프론트엔드 연동)  
+- S3Uploader 기반 이미지 업로드 지원  
+- 메시지 및 채팅방 엔티티: JPA, MySQL  
+- 예외 처리: `@ControllerAdvice`, 커스텀 예외  
+- 읽음 처리 및 마지막 메시지 필드 관리
+
+---
+
+### 🔧 설계 흐름 요약
+
+```
+[상품 상세] → [채팅 시작 버튼 클릭]
+    ↓ (POST)
+[ChatRoom 생성 또는 기존 반환]
+    ↓ (웹소켓 연결)
+[STOMP /sub/chat/room/{roomId} 구독]
+    ↕
+[메시지 송수신, 읽음 처리, 자동 재연결]
+```
+
+- 메시지 전송 시 → DB 저장 → 상대방이 구독 중이면 `/sub/...`로 실시간 전송
+- 사용자가 채팅방 나가면 메시지는 Soft Delete 처리 (상대방에게는 남아있음)
+- 채팅방 목록은 상대방 닉네임, 썸네일, 마지막 메시지, 읽지 않은 메시지 수 포함
+
+---
+
+### 🖥 프론트엔드 연동 흐름
+
+- `chatSocket.ts`를 통해 `STOMP over SockJS` 연결 관리
+- 연결 상태(`CONNECTED`, `RECONNECTING`)를 상태로 표시
+- `ChatRoom.tsx`
+  - 채팅방 진입 시 메시지 불러오고, `markMessagesAsRead`로 읽음 처리
+  - 메시지 전송 시 `sendChatMessage` 호출
+  - 메시지 수신 시 실시간 추가 렌더링 및 `scrollToBottom` 처리
+- `ChatRoomList.tsx`
+  - 5초 주기 `fetchMyChatRooms()`로 목록 갱신
+  - 각 채팅방 클릭 시 읽음 처리 후 `/chat/{roomId}`로 이동
+
+---
+
+### 🗃 DB 테이블 구조 (요약)
+
+#### `chat_rooms`
+- `id`: PK
+- `product_id`: 상품 FK
+- `buyer_id`, `seller_id`: 유저 FK
+- `last_message`: 마지막 메시지 요약
+- `last_message_at`: 마지막 메시지 시간
+- `is_closed`: 채팅방 종료 여부
+
+#### `chat_messages`
+- `id`: PK
+- `chat_room_id`: FK
+- `sender_id`, `receiver_id`: 유저 FK
+- `message`: 메시지 본문
+- `image_url`: 이미지 URL (nullable)
+- `type`: TEXT / IMAGE / SYSTEM
+- `is_read`: 읽음 여부
+- `is_deleted_by_sender`, `is_deleted_by_receiver`: Soft Delete 플래그
+- `sent_at`: 발송 시간
+
+---
+
+### 📦 ChatMessage 예시 DTO (응답)
+
+```json
+{
+  "messageId": 102,
+  "senderId": 3,
+  "senderNickname": "john_doe",
+  "senderProfileImage": "https://...jpg",
+  "message": "안녕하세요!",
+  "imageUrl": null,
+  "type": "TEXT",
+  "sentAt": "2025-04-25T13:12:00",
+  "isRead": true
+}
+```
+
+---
+
+### 🧪 테스트 및 예외 처리
+
+- 로그인 사용자 인증 실패 시 `401`
+- 채팅방 접근 권한 없음 → `403` 예외
+- 메시지 발송 시 `senderId` null 오류 방지 (`JwtHandshakeInterceptor` 활용)
+- 이미지 업로드 실패 대비한 예외 처리
+- WebSocket 연결 끊김 시 자동 reconnect 및 토스트 메시지 제공
+
+---
+
+### ✨ 추가 개선 아이디어
+
+- Redis Pub/Sub 연동하여 확장성 있는 메시지 브로드캐스팅 구조로 전환 고려
+- 메시지 read/unread 상태를 Redis Sorted Set으로 관리해 빠른 조회 가능하도록 개선
+- 알림(Notification) 기능과 연계하여 메시지 수신 시 실시간 알림 표시
+- 채팅방 내 이미지 미리보기 기능 및 파일 다운로드 기능 추가 예정
+- 대화 목록 검색, 채팅방 고정(Pin), 신고 기능 등 커뮤니티 기능 확장 고려
+
+---
+
 ## 🛠 주요 TroubleShooting (3주차)
 
 ### 1. WebSocket 세션에서 로그인 유저 정보가 안 들어옴
@@ -366,13 +498,107 @@ Table favorite_products {
 
 ---
 
-## 📌 4주차 계획 (예정)
-- 가계부 수입/지출 등록 및 조회
-- 예산 설정 기능
-- 예산 초과 계산 및 알림
+## 📦 4~5주차 - 예산 기반 가계부 & 소비 요약 기능
 
-## 📌 5주차 계획 (예정)
-- ChatGPT API 연동 → 소비 요약 챗봇
-- 전체 테스트 및 리팩터링
+### ✅ 기능 개요
+- 사용자는 월별로 수입/지출 내역을 등록하고, 예산을 설정할 수 있음
+- 월간 총 지출과 예산을 비교하여 예산 초과 여부를 판단
+- 카테고리별로 지출을 집계하여 시각화 및 소비 분석에 활용 가능
+- OpenAI ChatGPT 연동을 통해 소비 내역을 자연어로 요약하여 제공
+
+---
+
+### 🧩 주요 API 목록
+
+| 메서드 | URL | 설명 |
+|--------|-----|------|
+| `POST` | `/api/accountbook` | 수입/지출 등록 |
+| `GET` | `/api/accountbook?month=YYYY-MM` | 수입/지출 월별 조회 |
+| `GET` | `/api/accountbook/summary?month=YYYY-MM` | 카테고리별 합계, 예산 초과 여부 포함 요약 |
+| `POST` | `/api/budget` | 예산 등록 또는 수정 |
+| `GET` | `/api/budget?month=YYYY-MM` | 월별 예산 조회 |
+| `GET` | `/api/chatbot/summary?month=YYYY-MM` | ChatGPT 소비 요약 텍스트 생성 |
+
+---
+
+### 🧱 기술 스택 및 라이브러리
+
+- Spring Boot 3.x
+- JPA + MySQL
+- REST API 기반 CRUD
+- OpenAI ChatGPT (gpt-3.5-turbo) API 연동
+- 환경 변수 기반 API Key 관리 (`openai.api.key`)
+- Swagger UI로 API 명세 확인
+
+---
+
+### 🧪 테스트 및 검증
+
+- LedgerService, BudgetService, ChatbotService 각각 단위 테스트 완료
+- RestTemplate과 @Value 주입 필드를 위한 `ReflectionTestUtils` 사용
+- ChatGPT 요약 로직은 응답 Mock을 통해 안정적인 테스트 수행
+
+---
+
+### ✨ 주요 기능 흐름
+
+```
+[사용자 수입/지출 등록]
+        ↓
+[LedgerService → 월별 집계, 카테고리별 요약]
+        ↓
+[BudgetService → 예산 조회 및 초과 여부 판단]
+        ↓
+[ChatbotService → 프롬프트 생성 → GPT API 요청]
+        ↓
+[소비 요약 텍스트 반환 → 프론트 표시]
+```
+
+- 예산이 초과되었는지 여부를 포함하여 월별 소비 내역을 정리
+- GPT는 "이번 달 예산을 초과했으며 식비 지출이 높습니다" 형태로 요약 출력
+
+---
+
+### 📊 예시 응답 (ChatbotSummaryResponseDto)
+
+```json
+{
+  "summary": "이번 달 예산을 초과했으며, 특히 '식비'와 '쇼핑'에서 많은 지출이 있었습니다."
+}
+```
+
+---
+
+### 📦 DB 테이블 요약
+
+#### `ledgers`
+- `id`, `user_id`, `type(INCOME/EXPENSE)`, `amount`, `category`, `memo`, `date`, `created_at`
+
+#### `budgets`
+- `id`, `user_id`, `month(YYYY-MM)`, `amount`, `created_at`
+
+---
+
+### 🛠 TroubleShooting
+
+1. **OpenAI API 호출 시 401 Unauthorized**
+   - ✅ 해결: `application.yml`에 `${OPENAI_API_KEY}` 환경변수로 키 주입
+
+2. **RestTemplate 필드 주입이 테스트에서 안 됨**
+   - ✅ 해결: `ReflectionTestUtils.setField()` 사용해 Mock 객체 주입
+
+3. **예산이 없을 때 NPE 발생**
+   - ✅ 해결: `Optional.orElse(0)`로 기본값 처리 또는 0 예산 응답 제공
+
+---
+
+### 🔄 다음 단계 개선 아이디어
+
+- 카테고리별 예산 추가 기능 (예: 식비만 30만 원)
+- 월간 소비 추이 시각화 기능 (chart.js 연동)
+- 소비 패턴 기반 예측/알림 연동
+- Redis 캐싱 및 예산 초과 알림 자동화 기능
+
+## 📌 차주 계획 (예정)
 - GitHub Actions + Docker + AWS 배포
 
