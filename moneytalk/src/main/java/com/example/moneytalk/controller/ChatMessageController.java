@@ -19,6 +19,12 @@ import com.example.moneytalk.dto.ChatMessageDto;
 import com.example.moneytalk.repository.ChatRoomRepository;
 import com.example.moneytalk.service.ChatMessageService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -29,7 +35,18 @@ public class ChatMessageController {
     private final ChatMessageService chatMessageService;
     private final ChatRoomRepository chatRoomRepository;
     private final S3Uploader s3Uploader;
-    
+
+    /**
+     * WebSocket을 통해 전송된 채팅 메시지를 처리합니다.
+     * 1. 메시지를 저장하고,
+     * 2. 수신자를 판별한 후,
+     * 3. 해당 채팅방 구독자에게 메시지를 브로드캐스트합니다.
+     *
+     * @param messageDto 클라이언트로부터 수신된 채팅 메시지 DTO
+     * @param message WebSocket 메시지 객체 (세션 속성 포함)
+     * @throws IllegalStateException 인증되지 않은 사용자일 경우
+     * @throws IllegalArgumentException 채팅방이 존재하지 않을 경우
+     */
     @MessageMapping("/chat/message")
     public void handleMessage(ChatMessageDto messageDto, Message<?> message) {
         SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.wrap(message);
@@ -58,17 +75,32 @@ public class ChatMessageController {
         }
     }
 
-    
+    /**
+     * 채팅방 내 이미지 업로드 API입니다.
+     * S3에 이미지를 업로드하고, 업로드된 이미지 URL을 반환합니다.
+     *
+     * @param roomId 이미지가 첨부될 채팅방 ID
+     * @param file 업로드할 이미지 파일
+     * @return 업로드된 이미지의 URL
+     */
+    @Operation(
+        summary = "채팅 이미지 업로드",
+        description = "채팅방 내에서 사용할 이미지를 업로드하고, 업로드된 이미지의 URL을 반환합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업로드 성공",
+            content = @Content(schema = @Schema(implementation = ChatImageUploadResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content),
+        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+    })
     @PostMapping("/{roomId}/image")
     public ResponseEntity<ChatImageUploadResponseDto> uploadChatImage(
-        @PathVariable Long roomId,
+        @Parameter(description = "이미지를 업로드할 채팅방 ID", example = "1")
+        @PathVariable("roomId") Long roomId,
+        @Parameter(description = "업로드할 이미지 파일", required = true)
         @RequestPart("file") MultipartFile file
     ) {
         String url = s3Uploader.uploadFile(file, "chat-images");
         return ResponseEntity.ok(new ChatImageUploadResponseDto(url));
     }
-
-    
-    
-
 }
