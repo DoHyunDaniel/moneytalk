@@ -2,6 +2,13 @@
 
 > **소비 분석 기반의 중고거래 & 예산 챗봇 플랫폼**  
 > 중고 거래와 지출 관리, 그리고 AI 예산 상담을 하나로 통합한 생활 밀착형 서비스
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1-brightgreen)
+![MySQL](https://img.shields.io/badge/DB-MySQL-blue)
+![Redis](https://img.shields.io/badge/Cache-Redis-red)
+![AWS](https://img.shields.io/badge/Infra-AWS-orange)
+![Swagger](https://img.shields.io/badge/API-Docs-yellow)
+![WebSocket](https://img.shields.io/badge/Realtime-Chat-green)
 
 ---
 
@@ -58,6 +65,46 @@
 ![ERD](./erd.png)
 
 ---
+## 📁 디렉토리 구조
+
+```
+└── src
+    ├── config          # Security, WebSocket, JWT 설정 등
+    ├── controller      # API 엔드포인트
+    ├── domain          # JPA Entity 클래스
+    ├── dto             # Request/Response 객체
+    ├── repository      # Spring Data JPA 인터페이스
+    ├── repository      # 예외처리 계층
+    ├── type         	   # enum 타입(상품 판매 상태, 유저 타입 등)
+    └── service         # 비즈니스 로직 처리 계층
+```
+
+---
+
+## ✅ 개발 범위 (3주차 기준)
+
+### 👤 회원 관리
+- 회원가입 / 로그인 (JWT 기반)
+- 내 정보 조회, 수정
+- 기본 프로필 이미지 자동 등록
+
+### 🛍️ 중고 거래
+- 상품 등록 / 조회 / 상세 / 찜하기
+- 찜 여부 확인 및 토글 API
+
+### ⭐ 리뷰 시스템
+- 리뷰 작성 (텍스트 + 이미지 업로드)
+- 리뷰 수정 / 삭제 / 목록 / 평균 평점
+- S3 이미지 업로드, 삭제 처리
+
+### 💬 실시간 채팅
+- WebSocket 기반 실시간 1:1 채팅
+- Redis Pub/Sub 기반 메시지 처리
+- 채팅방 목록 조회, 채팅방 생성
+- 메시지 송수신, 채팅방 나가기 (Soft Delete)
+- 이미지 전송 기능 (S3 업로드)
+
+---
 
 ## [ 기술 스택 ]
 
@@ -76,13 +123,19 @@
 ### AI 연동
 - OpenAI ChatGPT API
 
-### 인프라 (계획)
-- Docker
+### 인프라
 - AWS (EC2, S3 등)
+- Docker(계획)
 
 ### 문서화 & 협업
 - Swagger (springdoc-openapi)
 - GitHub, Slack, Notion
+
+---
+
+## 🌐 API 명세
+- Swagger UI: `/swagger-ui/index.html`
+- JWT 인증 필요 API → Swagger Authorize 버튼 사용 (Bearer token)
 
 ---
 
@@ -270,17 +323,7 @@ Table favorite_products {
 
 ---
 
-### 7. ✅ Spring Data JPA 쿼리 메서드 오류
-
-- **문제**: `existsByUserIdAndProductId()` 메서드에서 `userId`를 필드로 인식하지 못함  
-  > `No property 'userId' found for type`
-- **해결 방법**:
-  - 실제 필드명이 `user`이므로  
-    → 메서드를 `existsByUser_IdAndProduct_Id()` 형식으로 작성해야 인식됨
-
----
-
-### 8. ✅ 평균 평점 조회 시 `ClassCastException`
+### 7. ✅ 평균 평점 조회 시 `ClassCastException`
 
 - **문제**: `Object[]`를 직접 캐스팅할 때 `java.lang.ClassCastException` 발생
 - **해결 방법**:
@@ -288,10 +331,48 @@ Table favorite_products {
   - `result[0]`와 `result[1]`을 각각 `Number`로 캐스팅 후  
     `.longValue()` / `.doubleValue()`로 변환하여 사용
 
-## 🚧 다음 목표 (예정)
+## 🛠 주요 TroubleShooting (3주차)
 
-- 🔍 **상품 검색 및 필터 기능 추가**  
-  사용자 검색어 및 조건(카테고리, 위치 등)에 따른 상품 필터링 기능 제공
+### 1. WebSocket 세션에서 로그인 유저 정보가 안 들어옴
+- `@AuthenticationPrincipal`이 null로 반환되는 문제
+- ✅ 해결: `JwtHandshakeInterceptor` 구현 → STOMP 연결 시 JWT 파싱하여 `Principal`로 주입
 
-- ❤️ **찜한 상품 리스트 조회 기능**  
-  사용자가 찜한 상품 목록을 별도로 조회할 수 있는 API 구현
+### 2. 메시지 전송 시 senderId가 null로 저장됨
+- 클라이언트에서 전달된 senderId만 의존했기 때문
+- ✅ 해결: 백엔드에서 로그인한 사용자 기준으로 sender 설정 → 보안 강화
+
+### 3. 이미지 전송 메시지에 텍스트가 null로 들어가면서 UI 오류 발생
+- ✅ 해결: 이미지 메시지일 경우 `message = "[이미지]"` 로 대체 저장
+
+---
+
+## 🔧 리팩토링 이력 (피드백 기반)
+
+### ✅ 1. 명시적 응답 타입 적용 (`ResponseEntity`)
+- `<?>` 사용 대신 `ResponseEntity<LoginResponse>` 명확화
+
+### ✅ 2. JWT 쿠키 처리 로직 분리 (`JwtCookieProvider`)
+- 쿠키 발급/삭제 로직을 별도 컴포넌트로 추출
+- 환경 변수(`COOKIE_SECURE`) 기반 secure 동적 제어
+
+### ✅ 3. 리뷰 통계 응답 구조 개선
+- `Object[]` 반환 제거 → `ReviewStatsDto`로 직접 DTO 매핑
+- 응답용 DTO는 `AverageRatingResponseDto`로 분리
+
+### ✅ 4. 도메인 필드 및 네이밍 통일
+- `Review.target` → `reviewee`로 리팩토링
+- 컬럼명도 `target_id` → `reviewee_id`로 변경
+- 외래 키 이름도 `fk_reviews_reviewee`로 재설정
+
+---
+
+## 📌 4주차 계획 (예정)
+- 가계부 수입/지출 등록 및 조회
+- 예산 설정 기능
+- 예산 초과 계산 및 알림
+
+## 📌 5주차 계획 (예정)
+- ChatGPT API 연동 → 소비 요약 챗봇
+- 전체 테스트 및 리팩터링
+- GitHub Actions + Docker + AWS 배포
+
