@@ -442,6 +442,10 @@ Table favorite_products {
 ```
 
 ---
+### 스크린샷
+![chat](./chat-example.png)
+![chatroom](./chatroom-example.png)
+---
 
 ### 🧪 테스트 및 예외 처리
 
