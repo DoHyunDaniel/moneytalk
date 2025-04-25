@@ -498,13 +498,107 @@ Table favorite_products {
 
 ---
 
-## 📌 4주차 계획 (예정)
-- 가계부 수입/지출 등록 및 조회
-- 예산 설정 기능
-- 예산 초과 계산 및 알림
+## 📦 4~5주차 - 예산 기반 가계부 & 소비 요약 기능
 
-## 📌 5주차 계획 (예정)
-- ChatGPT API 연동 → 소비 요약 챗봇
-- 전체 테스트 및 리팩터링
+### ✅ 기능 개요
+- 사용자는 월별로 수입/지출 내역을 등록하고, 예산을 설정할 수 있음
+- 월간 총 지출과 예산을 비교하여 예산 초과 여부를 판단
+- 카테고리별로 지출을 집계하여 시각화 및 소비 분석에 활용 가능
+- OpenAI ChatGPT 연동을 통해 소비 내역을 자연어로 요약하여 제공
+
+---
+
+### 🧩 주요 API 목록
+
+| 메서드 | URL | 설명 |
+|--------|-----|------|
+| `POST` | `/api/accountbook` | 수입/지출 등록 |
+| `GET` | `/api/accountbook?month=YYYY-MM` | 수입/지출 월별 조회 |
+| `GET` | `/api/accountbook/summary?month=YYYY-MM` | 카테고리별 합계, 예산 초과 여부 포함 요약 |
+| `POST` | `/api/budget` | 예산 등록 또는 수정 |
+| `GET` | `/api/budget?month=YYYY-MM` | 월별 예산 조회 |
+| `GET` | `/api/chatbot/summary?month=YYYY-MM` | ChatGPT 소비 요약 텍스트 생성 |
+
+---
+
+### 🧱 기술 스택 및 라이브러리
+
+- Spring Boot 3.x
+- JPA + MySQL
+- REST API 기반 CRUD
+- OpenAI ChatGPT (gpt-3.5-turbo) API 연동
+- 환경 변수 기반 API Key 관리 (`openai.api.key`)
+- Swagger UI로 API 명세 확인
+
+---
+
+### 🧪 테스트 및 검증
+
+- LedgerService, BudgetService, ChatbotService 각각 단위 테스트 완료
+- RestTemplate과 @Value 주입 필드를 위한 `ReflectionTestUtils` 사용
+- ChatGPT 요약 로직은 응답 Mock을 통해 안정적인 테스트 수행
+
+---
+
+### ✨ 주요 기능 흐름
+
+```
+[사용자 수입/지출 등록]
+        ↓
+[LedgerService → 월별 집계, 카테고리별 요약]
+        ↓
+[BudgetService → 예산 조회 및 초과 여부 판단]
+        ↓
+[ChatbotService → 프롬프트 생성 → GPT API 요청]
+        ↓
+[소비 요약 텍스트 반환 → 프론트 표시]
+```
+
+- 예산이 초과되었는지 여부를 포함하여 월별 소비 내역을 정리
+- GPT는 "이번 달 예산을 초과했으며 식비 지출이 높습니다" 형태로 요약 출력
+
+---
+
+### 📊 예시 응답 (ChatbotSummaryResponseDto)
+
+```json
+{
+  "summary": "이번 달 예산을 초과했으며, 특히 '식비'와 '쇼핑'에서 많은 지출이 있었습니다."
+}
+```
+
+---
+
+### 📦 DB 테이블 요약
+
+#### `ledgers`
+- `id`, `user_id`, `type(INCOME/EXPENSE)`, `amount`, `category`, `memo`, `date`, `created_at`
+
+#### `budgets`
+- `id`, `user_id`, `month(YYYY-MM)`, `amount`, `created_at`
+
+---
+
+### 🛠 TroubleShooting
+
+1. **OpenAI API 호출 시 401 Unauthorized**
+   - ✅ 해결: `application.yml`에 `${OPENAI_API_KEY}` 환경변수로 키 주입
+
+2. **RestTemplate 필드 주입이 테스트에서 안 됨**
+   - ✅ 해결: `ReflectionTestUtils.setField()` 사용해 Mock 객체 주입
+
+3. **예산이 없을 때 NPE 발생**
+   - ✅ 해결: `Optional.orElse(0)`로 기본값 처리 또는 0 예산 응답 제공
+
+---
+
+### 🔄 다음 단계 개선 아이디어
+
+- 카테고리별 예산 추가 기능 (예: 식비만 30만 원)
+- 월간 소비 추이 시각화 기능 (chart.js 연동)
+- 소비 패턴 기반 예측/알림 연동
+- Redis 캐싱 및 예산 초과 알림 자동화 기능
+
+## 📌 차주 계획 (예정)
 - GitHub Actions + Docker + AWS 배포
 
