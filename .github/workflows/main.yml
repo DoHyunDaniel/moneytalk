@@ -1,10 +1,10 @@
-name: MoneyTalk CI
+name: MoneyTalk Backend CI
 
 on:
   push:
-    branches: [ "main", "feature/**" ]   # main이나 feature 브랜치에 push할 때 실행
+    branches: [ "main", "feature/**" ]
   pull_request:
-    branches: [ "main" ]                  # main으로 PR할 때 실행
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -21,10 +21,12 @@ jobs:
         java-version: '17'
 
     - name: Grant permission for gradlew
-      run: chmod +x ./moneytalk/gradlew    # gradlew 실행 권한 부여
+      run: chmod +x ./moneytalk/gradlew   # backend 폴더 안 gradlew 실행권한
 
     - name: Build with Gradle
-      run: ./gradlew build       # 빌드 실행
+      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+      run: ./gradlew build
 
     - name: Run tests
-      run: ./gradlew test        # (선택) 테스트 실행
+      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+      run: ./gradlew test
