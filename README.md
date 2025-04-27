@@ -63,7 +63,7 @@
 ---
 ## [ ERD ]
 
-![ERD](./erd.png)
+![ERD](./moneytalk-erd.png)
 
 ---
 ## 📁 디렉토리 구조
