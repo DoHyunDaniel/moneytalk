@@ -49,6 +49,7 @@ export const connectChatSocket = ({
       console.log("✅ STOMP CONNECTED!");
 
       const subscription = stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg: IMessage) => {
+        console.timeEnd("sendMessage"); // 수신 순간 시간 측정 종료
         const body = JSON.parse(msg.body);
         console.log("✅ 수신된 메시지 본문:", body); 
         onMessage(body);
@@ -80,7 +81,7 @@ export const connectChatSocket = ({
     }
   });
 
-  stompClient.activate(); // ✅ 여기 한 번만
+  stompClient.activate();
 
   return () => {
     unsubscribeFn();
@@ -105,6 +106,8 @@ export const sendChatMessage = (data: {
   imageUrl?: string;
 }) => {
   if (!stompClient || !stompClient.connected) return;
+
+  console.time("sendMessage"); // 메세지 전송 시간 측정 시작
 
   stompClient.publish({
     destination: "/pub/chat/pub",
