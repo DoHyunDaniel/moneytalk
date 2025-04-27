@@ -82,7 +82,7 @@
 
 ---
 
-## ✅ 개발 범위 (3주차 기준)
+## ✅ 개발 범위 (4주차 기준)
 
 ### 👤 회원 관리
 - 회원가입 / 로그인 (JWT 기반)
@@ -102,14 +102,17 @@
 - WebSocket 기반 실시간 1:1 채팅
 - Redis Pub/Sub 기반 메시지 처리
 - 채팅방 목록 조회, 채팅방 생성
-- 메시지 송수신, 채팅방 나가기 (Soft Delete)
-- 이미지 전송 기능 (S3 업로드)
+- 메시지 송수신(Redis pub/sub 기반)
 
+
+### 미구현
+- 채팅방 나가기 (Soft Delete)
+- 이미지 전송 기능 (S3 업로드)
 ---
 
-## [ 기술 스택 ]
+## 🛠️ 기술 스택
 
-### 백엔드
+### Backend
 - Java 17
 - Spring Boot
 - Spring Security (JWT)
@@ -117,20 +120,22 @@
 - Spring Data JPA
 - Lombok
 
-### 데이터베이스
+### Database
 - MySQL
 - Redis
 
 ### AI 연동
 - OpenAI ChatGPT API
 
-### 인프라
+### Infra
 - AWS (EC2, S3 등)
-- Docker(계획)
+- Docker (계획)
 
 ### 문서화 & 협업
 - Swagger (springdoc-openapi)
-- GitHub, Slack, Notion
+- GitHub
+- Slack
+- Notion
 
 ---
 
@@ -662,15 +667,18 @@ Table favorite_products {
 
 ---
 
+## ⚙️ 개발 및 배포 환경
+
+- GitHub Actions 기반 CI 구축 (백엔드 빌드 자동화)
+
+---
 
 
-### 🔄 다음 단계 개선 아이디어
+### 📌 차주 계획 (예정)
 
 - 카테고리별 예산 추가 기능 (예: 식비만 30만 원)
 - 월간 소비 추이 시각화 기능 (chart.js 연동)
 - 소비 패턴 기반 예측/알림 연동
 - Redis 캐싱 및 예산 초과 알림 자동화 기능
-
-## 📌 차주 계획 (예정)
-- Docker + AWS 배포
+- AI 자연어 처리 기능 강화
 
