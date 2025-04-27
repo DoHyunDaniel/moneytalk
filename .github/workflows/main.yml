@@ -1,0 +1,32 @@
+name: MoneyTalk Backend CI
+
+on:
+  push:
+    branches: [ "main", "feature/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Grant permission for gradlew
+      run: chmod +x ./moneytalk/gradlew   # backend 폴더 안 gradlew 실행권한
+
+    - name: Build with Gradle
+      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+      run: ./gradlew build
+
+    - name: Run tests
+      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+      run: ./gradlew test
