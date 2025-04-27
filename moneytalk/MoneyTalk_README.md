@@ -592,6 +592,77 @@ Table favorite_products {
 
 ---
 
+## 4주차 🔥 New!
+
+- **Redis Pub/Sub 기반 다중 서버 대응 실시간 채팅 기능 구현**
+  - Redis Channel 구조: `chatroom:{chatRoomId}`
+  - 메시지 흐름: 클라이언트 → WebSocket `/pub/chat/pub` → 서버 Redis Publish → 서버 Redis Subscribe → 클라이언트 `/sub/chat/room/{roomId}`
+  - 서버 수평 확장 대비 구조 완성
+  - LocalDateTime 직렬화 이슈 해결 (jackson-datatype-jsr310 모듈 적용)
+  - Redis CLI를 통한 publish/subscribe 정상 작동 테스트 완료
+
+---
+
+## 기존 WebSocket 단독 vs Redis Pub/Sub 구조 성능 비교
+
+- WebSocket 직방 구조에서는 서버 1개에서는 빠르지만, 서버 다중 인스턴스(수평 확장) 시 연결 유지 불가
+- Redis Pub/Sub 적용 후:
+  - 서버 2개 이상 환경에서도 메시지 정상 브로드캐스트
+  - 메시지 전송 지연시간 평균 15~20ms 이내 유지
+  - 실시간 안정성과 확장성 확보
+- 추가로 LocalDateTime 직렬화 문제 해결, 메시지 publish/subscribe 안정성 향상
+
+## 직접 실험 기록
+- 테스트 방법: 전송 → 수신 시간 측정
+- Redis Pub/Sub 구조가 서버 증설 대비 확실히 우수함을 실험으로 검증
+
+---
+
+# 📷 데모 스크린샷
+
+- ✅ 프론트 채팅 전송 화면
+![채팅 전송 화면](./screenshots/front-chat-sent.png)
+- ✅ Redis-cli publish 수신 화면
+![publish 수신 화면](./screenshots/redis-cli-publish.png)
+- ✅ 상대방 실시간 수신(새로고침 없이 즉시 반영) 화면
+![실시간 수신](./screenshots/real-time-received.png)
+
+---
+
+# 🧠 기술적 회고 및 학습
+
+## 1. 목표
+- Redis Pub/Sub를 이용한 서버 다중 인스턴스 대응 실시간 채팅 구축
+
+## 2. 구현 과정 요약
+- WebSocket STOMP 연결 구조 점검
+- Redis Publisher/Subscriber 서비스 설계 및 통합
+- LocalDateTime 직렬화 문제 해결
+- 메시지 흐름 정상화 (Publish → Subscribe → Front 업데이트)
+
+## 3. 문제 상황 및 해결
+- WebSocket 401/400 인증 오류 → JWT 인증 필터 개선
+- Redis 메시지 직렬화 실패 → ObjectMapper 모듈 추가 등록
+- 프론트 연결 및 수신 메시지 동기화 → connectChatSocket 구조 수정
+
+## 4. 배운 점
+- 분산 시스템(다중 서버) 환경에서의 메시지 브로드캐스팅 흐름 이해
+- 실시간 서비스 구축 시 발생하는 인증, 직렬화 문제를 직접 디버깅/해결한 경험
+- Redis Pub/Sub와 WebSocket, Front 실시간 통신 통합 경험
+
+## 5. 아쉬운 점
+- 더 빠른 문제 원인 분석을 위해 로깅과 메시지 흐름 모니터링을 처음부터 강화했어야 했다
+- 실시간 테스트 자동화(테스트 코드 수준)까지는 도달하지 못함
+
+## 6. 다음 개선 방향
+- Redis 클러스터 테스트
+- WebSocket session 관리 고도화
+- 읽음 처리(ACK) 및 안정성 강화
+
+---
+
+
+
 ### 🔄 다음 단계 개선 아이디어
 
 - 카테고리별 예산 추가 기능 (예: 식비만 30만 원)

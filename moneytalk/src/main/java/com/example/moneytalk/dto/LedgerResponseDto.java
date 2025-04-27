@@ -17,30 +17,27 @@ import lombok.Setter;
  * 수입/지출 등록 및 조회 시 클라이언트에 반환되는 응답 데이터 구조를 정의합니다.
  */
 @Getter
-@Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @Schema(description = "가계부 항목 응답 DTO")
 public class LedgerResponseDto {
 
     @Schema(description = "가계부 항목 ID", example = "1")
-    private Long id;
+    private final Long id;
 
     @Schema(description = "항목 유형 (수입: INCOME, 지출: EXPENSE)", example = "EXPENSE")
-    private LedgerType type;
+    private final LedgerType type;
 
     @Schema(description = "항목 금액", example = "15000")
-    private Integer amount;
+    private final Integer amount;
 
     @Schema(description = "카테고리", example = "식비")
-    private String category;
+    private final String category;
 
     @Schema(description = "메모", example = "점심 식사")
-    private String memo;
+    private final String memo;
 
     @Schema(description = "거래 날짜", example = "2025-04-15")
-    private LocalDate date;
+    private final LocalDate date;
 
     /**
      * Ledger 엔티티로부터 LedgerResponseDto로 변환하는 정적 팩토리 메서드입니다.

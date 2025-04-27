@@ -71,7 +71,11 @@ public class UserService {
 
 	    User saved = userRepository.save(user);
 
-	    return new SignUpResponseDto(saved.getId(), saved.getEmail(), saved.getNickname());
+	    return SignUpResponseDto.builder()
+	            .userId(saved.getId())
+	            .email(saved.getEmail())
+	            .nickname(saved.getNickname())
+	            .build(); // ⭕
 	}
 
 	
@@ -89,7 +93,11 @@ public class UserService {
 	        }
 	    }
 
-	    return new NicknameSuggestionResponseDto(base, isAvailable, suggestions);
+	    return NicknameSuggestionResponseDto.builder()
+	            .base(base)
+	            .available(isAvailable)
+	            .suggestions(suggestions)
+	            .build();
 	}
 
 	
@@ -110,7 +118,12 @@ public class UserService {
 
 	    String token = jwtTokenProvider.createToken(user.getId(), user.getEmail());
 
-	    return new LoginResponseDto(token, user.getEmail(), user.getNickname());
+	    return LoginResponseDto.builder()
+	            .token(token)
+	            .email(user.getEmail())
+	            .nickname(user.getNickname())
+	            .build();
+
 	}
 	
 	
@@ -121,7 +134,11 @@ public class UserService {
      * @return 사용자 정보 응답 DTO (id, email, nickname)
      */
 	public UserInfoResponseDto getMyInfo(User user) {
-	    return new UserInfoResponseDto(user.getId(), user.getEmail(), user.getNickname());
+		return UserInfoResponseDto.builder()
+		        .userId(user.getId())
+		        .email(user.getEmail())
+		        .nickname(user.getNickname())
+		        .build();
 	}
 
 	

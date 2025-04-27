@@ -16,11 +16,11 @@ import lombok.Getter;
 public class BudgetResponseDto {
 
     @Schema(description = "예산이 설정된 월 (yyyy-MM 형식)", example = "2025-04")
-    private String month;
+    private final String month;
 
     @Schema(description = "설정된 예산 금액", example = "400000")
-    private Integer amount;
-
+    private final Integer amount;
+    
     /**
      * Budget 엔티티로부터 BudgetResponseDto로 변환하는 정적 팩토리 메서드
      *

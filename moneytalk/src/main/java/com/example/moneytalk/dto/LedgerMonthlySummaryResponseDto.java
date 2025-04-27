@@ -16,16 +16,16 @@ import java.util.Map;
 public class LedgerMonthlySummaryResponseDto {
 
     @Schema(description = "해당 월의 총 수입 합계", example = "3000000")
-    private Integer totalIncome;
+    private final Integer totalIncome;
 
     @Schema(description = "해당 월의 총 지출 합계", example = "450000")
-    private Integer totalExpense;
+    private final Integer totalExpense;
 
     @Schema(description = "카테고리별 지출 합계 (예: { \"식비\": 200000, \"쇼핑\": 250000 })")
-    private Map<String, Integer> categorySummary;
+    private final Map<String, Integer> categorySummary;
 
     @Schema(description = "설정된 예산 금액", example = "400000")
-    private Integer budget;
+    private final Integer budget;
 
     @Schema(description = "예산 초과 여부", example = "true")
     private boolean isExceeded;

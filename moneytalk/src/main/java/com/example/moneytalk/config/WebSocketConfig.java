@@ -20,7 +20,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-chat")
+        registry.addEndpoint("/ws-stomp")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider, userRepository)) // ✅ 인터셉터 추가
                 .withSockJS();

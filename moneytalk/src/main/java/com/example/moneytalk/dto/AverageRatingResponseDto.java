@@ -1,7 +1,8 @@
 package com.example.moneytalk.dto;
 
+import com.example.moneytalk.domain.AverageRating;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,7 +11,6 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-@AllArgsConstructor
 @Schema(description = "상품 평균 평점 응답 DTO")
 public class AverageRatingResponseDto {
 
@@ -22,4 +22,14 @@ public class AverageRatingResponseDto {
 
     @Schema(description = "총 리뷰 개수", example = "10", minimum = "0")
     private Long reviewCount;
+    
+    
+    public static AverageRatingResponseDto from(AverageRating averageRating) {
+    	return AverageRatingResponseDto.builder()
+    			.productId(averageRating.getProductId())
+    			.averageRating(averageRating.getAverageRating())
+    			.reviewCount(averageRating.getReviewCount())
+    			.build();
+    	
+    }
 }

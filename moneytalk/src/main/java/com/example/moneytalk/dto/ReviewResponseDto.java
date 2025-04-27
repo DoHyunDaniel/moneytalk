@@ -18,31 +18,31 @@ import lombok.Getter;
 public class ReviewResponseDto {
 
     @Schema(description = "리뷰 ID", example = "1")
-    private Long reviewId;
+    private final Long reviewId;
 
     @Schema(description = "리뷰 대상 상품 ID", example = "5")
-    private Long productId;
+    private final Long productId;
     
     @Schema(description = "리뷰 작성자 ID", example = "3")
-    private Long reviewerId;
+    private final Long reviewerId;
     
     @Schema(description = "리뷰 대상자 ID", example = "1")
-    private Long revieweeId;
+    private final Long revieweeId;
     
     @Schema(description = "리뷰 작성자 닉네임", example = "david123")
-    private String reviewerNickname;
+    private final String reviewerNickname;
 
     @Schema(description = "평점 (1~5)", example = "5")
-    private int rating;
+    private Integer rating;
 
     @Schema(description = "리뷰 내용", example = "친절하고 시간도 잘 지켜주셨어요!")
-    private String content;
+    private final String content;
 
     @Schema(description = "리뷰에 첨부된 이미지 URL 목록", example = "[\"https://.../review1.jpg\", \"https://.../review2.jpg\"]")
-    private List<String> imageUrls;
+    private final List<String> imageUrls;
     
     @Schema(description = "리뷰 작성 일시", example = "2025-04-11T14:35:00")
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     /**
      * Review 엔티티와 이미지 URL 목록으로부터 ReviewResponseDto를 생성합니다.

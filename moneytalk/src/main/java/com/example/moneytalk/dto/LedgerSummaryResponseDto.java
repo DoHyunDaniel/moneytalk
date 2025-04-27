@@ -19,22 +19,22 @@ import java.time.LocalDate;
 public class LedgerSummaryResponseDto {
 
     @Schema(description = "가계부 항목 ID", example = "1")
-    private Long id;
+    private final Long id;
 
     @Schema(description = "항목 유형 (수입: INCOME, 지출: EXPENSE)", example = "INCOME")
-    private LedgerType type;
+    private final LedgerType type;
 
     @Schema(description = "항목 금액", example = "25000")
-    private Integer amount;
+    private final Integer amount;
 
     @Schema(description = "카테고리", example = "교통")
-    private String category;
+    private final String category;
 
     @Schema(description = "메모 (선택)", example = "지하철 정기권")
-    private String memo;
+    private final String memo;
 
     @Schema(description = "거래 날짜", example = "2025-04-20")
-    private LocalDate date;
+    private final LocalDate date;
 
     /**
      * Ledger 엔티티로부터 LedgerSummaryResponseDto로 변환하는 정적 팩토리 메서드입니다.

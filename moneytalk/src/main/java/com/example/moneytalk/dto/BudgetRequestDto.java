@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,8 +13,8 @@ import lombok.Setter;
  * 예산 등록 또는 수정 요청을 위한 DTO입니다.
  * 사용자는 특정 월(month)에 대한 예산 금액(amount)을 설정할 수 있습니다.
  */
-@Getter
-@Setter
+@Getter    
+@Builder
 @Schema(description = "예산 등록/수정 요청 DTO")
 public class BudgetRequestDto {
 
@@ -26,4 +27,5 @@ public class BudgetRequestDto {
     @Min(value = 0, message = "예산 금액은 0 이상이어야 합니다.")
     @Schema(description = "해당 월의 예산 금액 (0 이상의 정수)", example = "400000", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer amount;
+
 }

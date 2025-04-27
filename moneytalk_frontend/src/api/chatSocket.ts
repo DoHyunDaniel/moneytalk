@@ -36,54 +36,57 @@ export const connectChatSocket = ({
   onDisconnectForced,
   onReconnectSuccess,
 }: SocketOptions): () => void => {
-  const socket = new SockJS("http://localhost:8080/ws-chat");
-  stompClient = Stomp.over(() => socket);
-  stompClient.debug = () => {}; // 디버깅 로그 비활성화
-  stompClient.reconnectDelay = 5000; // 5초 후 자동 재연결
+  const socket = new SockJS("http://localhost:8080/ws-stomp");
 
   let wasDisconnected = false;
   let unsubscribeFn = () => {};
 
-  // 연결 성공 시
-  stompClient.onConnect = () => {
-    onConnectChange?.("CONNECTED");
+  stompClient = new Client({
+    webSocketFactory: () => socket,
+    debug: (msg) => console.log("[STOMP DEBUG]", msg),
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log("✅ STOMP CONNECTED!");
 
-    // 재연결 후 콜백 트리거
-    if (wasDisconnected && onReconnectSuccess) {
-      onReconnectSuccess();
-      wasDisconnected = false;
+      const subscription = stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg: IMessage) => {
+        const body = JSON.parse(msg.body);
+        console.log("✅ 수신된 메시지 본문:", body); 
+        onMessage(body);
+      });
+
+      unsubscribeFn = () => {
+        subscription.unsubscribe();
+        stompClient.deactivate();
+        onConnectChange?.("DISCONNECTED");
+      };
+
+      onConnectChange?.("CONNECTED");
+
+      if (wasDisconnected && onReconnectSuccess) {
+        onReconnectSuccess();
+        wasDisconnected = false;
+      }
+    },
+    onStompError: (frame) => {
+      console.error("❗ STOMP Error: ", frame);
+    },
+    onWebSocketClose: () => {
+      console.warn("❗ WebSocket Close");
+      onConnectChange?.("RECONNECTING");
+      wasDisconnected = true;
+      if (!stompClient.connected && onDisconnectForced) {
+        onDisconnectForced();
+      }
     }
+  });
 
-    // 채팅방 구독 시작
-    const subscription = stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg: IMessage) => {
-      const body = JSON.parse(msg.body);
-      onMessage(body); // 수신 메시지 핸들링
-    });
-
-    // 언서브 함수 정의
-    unsubscribeFn = () => {
-      subscription.unsubscribe();
-      stompClient.deactivate();
-      onConnectChange?.("DISCONNECTED");
-    };
-  };
-
-  // 소켓 연결이 끊겼을 때
-  stompClient.onWebSocketClose = () => {
-    onConnectChange?.("RECONNECTING");
-    wasDisconnected = true;
-
-    if (!stompClient.connected && onDisconnectForced) {
-      onDisconnectForced();
-    }
-  };
-
-  stompClient.activate(); // 연결 시작
+  stompClient.activate(); // ✅ 여기 한 번만
 
   return () => {
-    unsubscribeFn(); // 클린업 함수 반환
+    unsubscribeFn();
   };
 };
+
 
 /**
  * 채팅 메시지 전송 함수
@@ -104,7 +107,7 @@ export const sendChatMessage = (data: {
   if (!stompClient || !stompClient.connected) return;
 
   stompClient.publish({
-    destination: "/pub/chat/message",
+    destination: "/pub/chat/pub",
     body: JSON.stringify(data),
   });
 };

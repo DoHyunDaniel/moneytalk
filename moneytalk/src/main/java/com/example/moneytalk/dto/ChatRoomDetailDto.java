@@ -12,7 +12,6 @@ import lombok.Setter;
  * 채팅방 ID, 상품 정보, 상대방 사용자 정보를 포함합니다.
  */
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

@@ -63,7 +63,9 @@ public class ChatbotService {
         ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, Map.class);
         String result = extractContent(response);
 
-        return new ChatbotSummaryResponseDto(result);
+        return ChatbotSummaryResponseDto.builder()
+                .summary(result)
+                .build();
     }
 
     /**

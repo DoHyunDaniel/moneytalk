@@ -32,9 +32,10 @@ class BudgetServiceTest {
         // given
         User user = User.builder().id(1L).build();
 
-        BudgetRequestDto request = new BudgetRequestDto();
-        request.setMonth("2025-04");
-        request.setAmount(500000);
+        BudgetRequestDto request = BudgetRequestDto.builder()
+        		.month("2025-04")
+        		.amount(500000)
+        		.build();
 
         Budget saved = Budget.builder()
                 .id(1L)
@@ -66,9 +67,10 @@ class BudgetServiceTest {
                 .amount(400000)
                 .build();
 
-        BudgetRequestDto request = new BudgetRequestDto();
-        request.setMonth("2025-04");
-        request.setAmount(600000); // 수정
+        BudgetRequestDto request = BudgetRequestDto.builder()
+        		.month("2025-04")
+        		.amount(600000)
+        		.build();
 
         given(budgetRepository.findByUserAndMonth(user, "2025-04")).willReturn(Optional.of(existing));
         given(budgetRepository.save(any(Budget.class))).willReturn(existing);

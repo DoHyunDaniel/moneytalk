@@ -1,8 +1,9 @@
 package com.example.moneytalk.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,4 +24,5 @@ public class LoginRequestDto {
     @Schema(description = "사용자 비밀번호", example = "securePassword123!", required = true)
     @NotBlank(message = "비밀번호는 필수 입력값입니다.")
     private String password;
+    
 }

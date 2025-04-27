@@ -19,37 +19,37 @@ import lombok.Getter;
 public class ProductResponseDto {
 
     @Schema(description = "상품 ID", example = "101")
-    private Long id;
+    private final Long id;
 
     @Schema(description = "상품 제목", example = "아이폰 14 Pro 미개봉")
-    private String title;
+    private final String title;
 
     @Schema(description = "상품 설명", example = "박스 개봉만 한 새 제품입니다. 구성품 모두 포함.")
-    private String description;
+    private final String description;
 
     @Schema(description = "상품 가격 (단위: 원)", example = "1250000")
-    private Integer price;
+    private final Integer price;
 
     @Schema(description = "상품 카테고리", example = "전자기기")
-    private String category;
+    private final String category;
 
     @Schema(description = "상품 거래 위치", example = "서울시 강남구 역삼동")
-    private String location;
+    private final String location;
 
     @Schema(description = "상품 상태", example = "SALE")
-    private ProductStatus status;
+    private final ProductStatus status;
 
     @Schema(description = "상품 등록 시간", example = "2025-04-25T16:00:00")
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     @Schema(description = "판매자 ID", example = "5")
-    private Long sellerId;
+    private final Long sellerId;
 
     @Schema(description = "판매자 닉네임", example = "dohyunnn")
-    private String sellerNickname;
+    private final String sellerNickname;
 
     @Schema(description = "상품 이미지 URL 목록", example = "[\"https://.../1.jpg\", \"https://.../2.jpg\"]")
-    private List<String> images;
+    private final List<String> images;
 
     /**
      * Product 엔티티와 이미지 URL 목록으로부터 ProductResponseDto를 생성합니다.

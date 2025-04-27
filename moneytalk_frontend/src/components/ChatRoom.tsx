@@ -107,16 +107,27 @@ const ChatRoom = () => {
       alert("메시지를 보내려면 먼저 서버와 연결되어야 합니다.");
       return;
     }
-
-    sendChatMessage({
+  
+    // 보낼 메시지 객체를 직접 만들기
+    const newMessage: ChatMessage = {
       chatRoomId: Number(roomId),
       senderId: currentUserId,
       senderNickname: "",
       message: input,
       type: "TEXT",
-    });
-    setInput("");
+      sentAt: new Date().toISOString(), // 바로 클라이언트에서 시간 세팅
+    };
+  
+    // 1. 즉시 프론트 상태 업데이트
+    setMessages((prev) => [...prev, newMessage]);
+  
+    // 2. 서버에 전송
+    sendChatMessage(newMessage);
+  
+    setInput(""); // 입력창 초기화
+    scrollToBottom(); // 맨 아래로 스크롤
   };
+  
 
   // 아직 유저 정보 불러오는 중
   if (currentUserId === null) {

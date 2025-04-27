@@ -19,22 +19,22 @@ import lombok.Getter;
 public class PurchaseHistoryResponseDto {
 
     @Schema(description = "이력 ID", example = "3001")
-    private Long id;
+    private final Long id;
 
     @Schema(description = "상품 ID", example = "101")
-    private Long productId;
+    private final Long productId;
 
     @Schema(description = "상품 제목", example = "아이패드 미니 6세대")
-    private String title;
+    private final String title;
 
     @Schema(description = "거래 가격 (원)", example = "550000")
-    private Integer price;
+    private final Integer price;
 
     @Schema(description = "거래 유형 (PURCHASE: 구매, SALE: 판매)", example = "PURCHASE")
-    private PurchaseType type;
+    private final PurchaseType type;
 
     @Schema(description = "거래 일시", example = "2025-04-25T17:00:00")
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     /**
      * PurchaseHistory 엔티티로부터 DTO를 생성하는 팩토리 메서드입니다.

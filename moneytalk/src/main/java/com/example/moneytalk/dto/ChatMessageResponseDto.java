@@ -53,9 +53,9 @@ public class ChatMessageResponseDto {
     public static ChatMessageResponseDto from(ChatMessage message) {
         return ChatMessageResponseDto.builder()
             .messageId(message.getId())
-            .senderId(message.getSender().getId())
-            .senderNickname(message.getSender().getNickname())
-            .senderProfileImage(message.getSender().getProfileImageUrl())
+            .senderId(message.getSender() != null ? message.getSender().getId() : null)
+            .senderNickname(message.getSender() != null ? message.getSender().getNickname() : null)
+            .senderProfileImage(message.getSender() != null ? message.getSender().getProfileImageUrl() : null)
             .message(message.getMessage())
             .imageUrl(message.getImageUrl())
             .type(message.getType())
@@ -63,4 +63,5 @@ public class ChatMessageResponseDto {
             .isRead(message.isRead())
             .build();
     }
+
 }

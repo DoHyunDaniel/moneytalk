@@ -1,7 +1,9 @@
 package com.example.moneytalk.dto;
 
 import com.example.moneytalk.type.ProductStatus;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,6 +39,7 @@ public class ProductSearchRequestDto {
         example = "10000",
         minimum = "0"
     )
+    @Min(0)
     private Integer minPrice;
 
     @Schema(
@@ -44,6 +47,7 @@ public class ProductSearchRequestDto {
         example = "1000000",
         minimum = "0"
     )
+    @Min(0)
     private Integer maxPrice;
 
     @Schema(

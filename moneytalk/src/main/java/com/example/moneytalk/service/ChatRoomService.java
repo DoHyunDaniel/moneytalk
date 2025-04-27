@@ -26,7 +26,8 @@ public class ChatRoomService {
 
 	private final ChatRoomRepository chatRoomRepository;
 	private final ChatMessageRepository chatMessageRepository;
-
+	private final RedisSubscriberService redisSubscriberService;
+	
 	/**
 	 * 상품, 구매자, 판매자 정보를 기반으로 채팅방을 생성합니다.
 	 * 동일한 조합의 채팅방이 이미 존재할 경우 해당 채팅방을 반환하고,
@@ -39,14 +40,20 @@ public class ChatRoomService {
 	 */
 	@Transactional
 	public ChatRoom createChatRoom(Product product, User buyer, User seller) {
-		return chatRoomRepository.findByProductAndBuyerAndSeller(product, buyer, seller)
-				.orElseGet(() -> chatRoomRepository
-						.save(ChatRoom.builder()
-								.product(product)
-								.buyer(buyer)
-								.seller(seller)
-								.isClosed(false)
-								.build()));
+	    return chatRoomRepository.findByProductAndBuyerAndSeller(product, buyer, seller)
+	            .orElseGet(() -> {
+	                ChatRoom newRoom = chatRoomRepository.save(ChatRoom.builder()
+	                        .product(product)
+	                        .buyer(buyer)
+	                        .seller(seller)
+	                        .isClosed(false)
+	                        .build());
+	                
+	                // 채팅방 생성 직후 Redis 구독 추가
+	                redisSubscriberService.subscribeChatRoom(newRoom.getId());
+	                
+	                return newRoom;
+	            });
 	}
 
 	/**
