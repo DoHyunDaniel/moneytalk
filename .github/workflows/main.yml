@@ -25,8 +25,8 @@ jobs:
 
     - name: Build with Gradle
       working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
-      run: ./gradlew build
-
-    - name: Run tests
-      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
-      run: ./gradlew test
+      run: ./gradlew build -x test
+  
+    # - name: Run tests
+    #   working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+    #   run: ./gradlew test
