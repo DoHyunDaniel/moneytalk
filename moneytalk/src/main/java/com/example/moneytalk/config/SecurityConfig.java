@@ -35,10 +35,12 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		return http.cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/users/signup", "/api/users/login", "/oauth2/**", "/v3/api-docs/**",
-								"/swagger-ui/**", "/swagger-ui.html", "/ws-stomp/**", "/api/chat/**", "/pub/**","/sub/**")
-						.permitAll().anyRequest().authenticated())
+				.authorizeHttpRequests(
+						auth -> auth
+								.requestMatchers("/api/users/signup", "/api/users/login", "/api/users/suggest-nickname",
+										"/oauth2/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+										"/ws-stomp/**", "/api/chat/**", "/pub/**", "/sub/**")
+								.permitAll().anyRequest().authenticated())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					response.setContentType("application/json;charset=UTF-8");

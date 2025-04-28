@@ -29,14 +29,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
-	    String requestUri = request.getRequestURI();
+		String requestUri = request.getRequestURI();
 
-	    // WebSocket 연결은 토큰 검사 패스
-	    if (requestUri.startsWith("/ws-stomp")) {
-	        filterChain.doFilter(request, response);
-	        return;
-	    }
-		
+		// WebSocket 연결은 토큰 검사 패스
+		if (requestUri.startsWith("/ws-stomp") || requestUri.equals("/api/users/signup")) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+
 		String token = resolveToken(request);
 
 		if (token != null && jwtTokenProvider.validateToken(token)) {
