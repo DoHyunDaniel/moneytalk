@@ -47,3 +47,4 @@ application-*.properties
 *.ear
 
 /build/generated/
+moneytalk_frontend_backup/
