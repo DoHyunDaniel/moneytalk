@@ -657,7 +657,7 @@ Table favorite_products {
    - 기존 WebSocket 구조에 Redis Pub/Sub만 추가해도 큰 효과를 볼 수 있음
    - 코드 변경 최소화, 서비스 신뢰성 대폭 향상
 
-![WebSocket+Redis pub/sub](./screenshots/redis-chat-system-structure.png)
+![WebSocket+Redis pub/sub](./moneytalk/screenshots/redis-chat-system-structure.png)
 ---
 
 ## 🚀 결론
