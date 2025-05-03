@@ -75,8 +75,8 @@
     ├── domain          # JPA Entity 클래스
     ├── dto             # Request/Response 객체
     ├── repository      # Spring Data JPA 인터페이스
-    ├── repository      # 예외처리 계층
-    ├── type         	   # enum 타입(상품 판매 상태, 유저 타입 등)
+    ├── exception       # 예외처리 계층
+    ├── type         	# enum 타입(상품 판매 상태, 유저 타입 등)
     └── service         # 비즈니스 로직 처리 계층
 ```
 
@@ -232,7 +232,7 @@ Table favorite_products {
 ```
 ---
 
-# 🛍️ MoneyTalk - 2주차 백엔드 개발 정리
+# 📌 2주차 개발 정리 - 중고 거래 기능
 
 ## 🔧 주요 구현 기능
 
@@ -339,7 +339,7 @@ Table favorite_products {
     `.longValue()` / `.doubleValue()`로 변환하여 사용
 
 
-## 📦 3주차 - 실시간 채팅 기능
+## 📌 3주차 개발 정리 - 실시간 채팅 기능
 
 ### ✅ 기능 개요
 - 상품 상세 페이지에서 판매자와 1:1 채팅방 생성
@@ -599,7 +599,7 @@ Table favorite_products {
 
 ---
 
-## 4주차 🔥 New!
+## 📌 4주차 개발 정리 - Redis 기반 구조 적용
 
 - **Redis Pub/Sub 기반 다중 서버 대응 실시간 채팅 기능 구현**
   - Redis Channel 구조: `chatroom:{chatRoomId}`
@@ -618,8 +618,8 @@ Table favorite_products {
 |-----------------------|----------------|----------------------------|
 | 메시지 처리 방식        | 서버 메모리 기반 직접 처리 | Redis를 통한 Pub/Sub 중계 |
 | 확장성                  | 서버 1대 기준 최적화 | 서버 단중화 및 분산 환경 최적화 |
-| 평균 전송 지역 시간 (ms) | 약 40~50ms      | 약 32~35ms                 |
-| 장절 보원력             | 낮음             | 높음 ( 서버 간 보관 가능)     |
+| 평균 전송 지역 시간 (ms) | 약 28~30ms      | 약 32~35ms                 |
+| 장애 복원력             | 낮음             | 높음 ( 서버 간 보관 가능)     |
 
 ---
 
