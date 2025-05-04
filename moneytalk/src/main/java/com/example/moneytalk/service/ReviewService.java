@@ -87,7 +87,7 @@ public class ReviewService {
 		if (exists) {
 			throw new GlobalException(ErrorCode.REVIEW_ALREADY_WRITTEN);
 		}
-
+		
 		User reviewee = userRepository.findById(dto.getRevieweeId())
 				.orElseThrow(() -> new GlobalException(ErrorCode.USER_NOT_FOUND));
 

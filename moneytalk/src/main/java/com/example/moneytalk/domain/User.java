@@ -62,7 +62,6 @@ public class User implements UserDetails {
 	private LocalDateTime createdAt;
 
 	// 디폴트 이미지 적용
-	// 디폴트 이미지 미정
 	@Column(nullable = true)
 	private String profileImageUrl;
 

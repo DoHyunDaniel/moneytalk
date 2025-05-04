@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +15,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
 @Schema(description = "리뷰 작성 요청 DTO")
 public class ReviewRequestDto {
 
@@ -33,4 +35,5 @@ public class ReviewRequestDto {
     @Schema(description = "리뷰 본문 내용", example = "정말 좋은 거래였습니다!", required = true)
     @NotBlank(message = "리뷰 내용을 입력해주세요.")
     private String content;
+
 }
