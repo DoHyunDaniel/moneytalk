@@ -19,9 +19,11 @@ import com.example.moneytalk.dto.ChatMessageResponseDto;
 import com.example.moneytalk.dto.ChatRoomDetailDto;
 import com.example.moneytalk.dto.ChatRoomResponseDto;
 import com.example.moneytalk.dto.ChatRoomSummaryDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.ProductRepository;
 import com.example.moneytalk.service.ChatMessageService;
 import com.example.moneytalk.service.ChatRoomService;
+import com.example.moneytalk.type.ErrorCode;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,7 +67,7 @@ public class ChatRoomController {
             @Parameter(hidden = true) @AuthenticationPrincipal User loginUser
     ) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
         ChatRoom chatRoom = chatRoomService.createChatRoom(product, loginUser, product.getUser());
 

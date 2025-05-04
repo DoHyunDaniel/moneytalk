@@ -130,7 +130,7 @@ public class ProductController {
 		@PostMapping(value = "/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 		public ResponseEntity<Void> uploadProductImages(
 		        @Parameter(name = "productId", description = "상품 ID", example = "1")
-		        @PathVariable Long productId,
+		        @PathVariable("productId") Long productId,
 		        @Parameter(description = "추가할 이미지 파일들 (최소 1장 이상)", required = true)
 		        @RequestPart("images") List<MultipartFile> images,
 		        @Parameter(description = "대표 이미지로 지정할 인덱스 (0부터 시작)", example = "0")
@@ -166,7 +166,7 @@ public class ProductController {
 	@Operation(summary = "상품 리뷰 목록 조회", description = "특정 상품에 대한 모든 리뷰를 조회합니다.")
 	@GetMapping("/{productId}/reviews")
 	public ResponseEntity<List<ReviewResponseDto>> getProductReviews(
-	        @Parameter(name = "productId", description = "상품 ID", example = "1") @PathVariable Long productId) {
+	        @Parameter(name = "productId", description = "상품 ID", example = "1") @PathVariable("productId") Long productId) {
 	    List<ReviewResponseDto> reviews = reviewService.getReviewsByProductId(productId);
 	    return ResponseEntity.ok(reviews);
 	}

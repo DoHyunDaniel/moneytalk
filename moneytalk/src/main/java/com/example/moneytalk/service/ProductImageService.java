@@ -9,8 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.moneytalk.config.S3Uploader;
 import com.example.moneytalk.domain.Product;
 import com.example.moneytalk.domain.ProductImage;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.ProductImageRepository;
 import com.example.moneytalk.repository.ProductRepository;
+import com.example.moneytalk.type.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,12 +40,12 @@ public class ProductImageService {
      *
      * @param productId 이미지 정보를 조회할 상품 ID
      * @return 이미지 URL 리스트
-     * @throws IllegalArgumentException 상품이 존재하지 않을 경우
+     * @throws GlobalException 상품이 존재하지 않을 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
      */
     public List<String> getImageUrlsByProductId(Long productId) {
         // 상품 존재 여부 확인
         if (!productRepository.existsById(productId)) {
-            throw new IllegalArgumentException("상품이 존재하지 않습니다.");
+            throw new GlobalException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         return productImageRepository.findByProductId(productId)
@@ -52,10 +54,19 @@ public class ProductImageService {
                 .toList();
     }
     
+    
+    /**
+     * 상품 이미지 리스트를 업로드하고, 대표 이미지(썸네일)를 지정합니다.
+     *
+     * @param productId 업로드할 상품의 ID
+     * @param images 업로드할 이미지 파일 리스트
+     * @param thumbnailIndex 대표 이미지로 설정할 이미지 인덱스 (null일 경우 첫 번째 이미지로 설정)
+     * @throws GlobalException 상품이 존재하지 않는 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
+     */
     @Transactional
     public void uploadProductImages(Long productId, List<MultipartFile> images, Integer thumbnailIndex) {
         Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+            .orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
         for (int i = 0; i < images.size(); i++) {
             MultipartFile file = images.get(i);

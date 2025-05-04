@@ -3,11 +3,17 @@ package com.example.moneytalk.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,21 +26,25 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import com.example.moneytalk.config.JwtCookieProvider;
 import com.example.moneytalk.dto.LoginRequestDto;
@@ -42,12 +52,17 @@ import com.example.moneytalk.dto.LoginResponseDto;
 import com.example.moneytalk.dto.NicknameSuggestionResponseDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.dto.SignUpResponseDto;
+import com.example.moneytalk.dto.UpdateNicknameRequestDto;
+import com.example.moneytalk.dto.UserInfoResponseDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.service.UserService;
+import com.example.moneytalk.type.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@SpringBootTest
 @AutoConfigureMockMvc
-@WebMvcTest(UserController.class)
-@Import({JwtCookieProvider.class, UserControllerTest.TestConfig.class})
+@ActiveProfiles("test")
+//@TestPropertySource(locations = "classpath:application-test.yml")
 class UserControllerTest {
 	@TestConfiguration
 	static class TestConfig {
@@ -191,18 +206,259 @@ class UserControllerTest {
 	@Nested
 	@DisplayName("내 정보 조회 테스트")
 	class GetMyInfoTest {
-		// ✨ 작성 예정
+
+	    @Test
+	    @WithMockUser(username = "user@example.com")
+	    @DisplayName("내 정보 조회 성공")
+	    void getMyInfoSuccess() throws Exception {
+	        UserInfoResponseDto response = UserInfoResponseDto.builder()
+	                .userId(1L)
+	                .email("user@example.com")
+	                .nickname("dohyunnn")
+	                .build();
+
+	        given(userService.getMyInfo(any())).willReturn(response);
+
+	        mockMvc.perform(get("/api/users/me").with(csrf()))
+	                .andExpect(status().isOk())
+	                .andExpect(jsonPath("$.userId").value(1L))
+	                .andExpect(jsonPath("$.email").value("user@example.com"))
+	                .andExpect(jsonPath("$.nickname").value("dohyunnn"));
+	    }
 	}
+
+
 
 	@Nested
 	@DisplayName("닉네임 수정 테스트")
 	class UpdateNicknameTest {
-		// ✨ 작성 예정
+
+	    @Test
+	    @DisplayName("닉네임 수정 성공")
+	    void updateNicknameSuccess() throws Exception {
+	        UpdateNicknameRequestDto request = UpdateNicknameRequestDto.builder()
+	                .nickname("hyunnnn")
+	                .build();
+
+	        com.example.moneytalk.domain.User mockUser = com.example.moneytalk.domain.User.builder()
+	                .id(1L)
+	                .email("user@example.com")
+	                .nickname("oldNick")
+	                .password("encodedPassword")
+	                .build();
+
+	        doNothing().when(userService).updateNickname(any(), anyString());
+
+	        mockMvc.perform(patch("/api/users/me")
+	                        .with(csrf())
+	                        .with(user(mockUser)) // 핵심!
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request)))
+	                .andExpect(status().isNoContent())
+	                .andDo(print());
+
+	        verify(userService, times(1)).updateNickname(any(), anyString());
+	    }
 	}
+
+
+
 
 	@Nested
 	@DisplayName("회원 탈퇴 테스트")
 	class DeleteUserTest {
-		// ✨ 작성 예정
+
+	    @Test
+	    @WithMockUser(username = "user@example.com")
+	    @DisplayName("회원 탈퇴 성공")
+	    void deleteUserSuccess() throws Exception {
+	        mockMvc.perform(delete("/api/users/me").with(csrf()))
+	                .andExpect(status().isNoContent());
+
+	        verify(userService, times(1)).deleteUser(any());
+	    }
 	}
+
+
+	
+	@Nested
+	@DisplayName("회원가입 실패 테스트")
+	class SignUpFailTest {
+
+	    @Test
+		@WithMockUser
+	    @DisplayName("이미 사용 중인 이메일로 회원가입 시 409 반환")
+	    void signUpWithDuplicateEmail() throws Exception {
+	        // given
+	        SignUpRequestDto request = SignUpRequestDto.builder()
+	                .email("user@example.com")
+	                .password("password123!")
+	                .nickname("newbie")
+	                .build();
+
+	        given(userService.signUp(any(SignUpRequestDto.class)))
+	                .willThrow(new GlobalException(ErrorCode.EMAIL_ALREADY_EXISTS));
+
+	        // when & then
+	        mockMvc.perform(post("/api/users/signup")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request))
+	                        .with(csrf()))
+	                .andExpect(status().isConflict()) // 409
+	                .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
+	    }
+
+	    @Test
+		@WithMockUser
+	    @DisplayName("이미 사용 중인 닉네임으로 회원가입 시 409 반환")
+	    void signUpWithDuplicateNickname() throws Exception {
+	        // given
+	        SignUpRequestDto request = SignUpRequestDto.builder()
+	                .email("new@example.com")
+	                .password("password123!")
+	                .nickname("dohyunnn")
+	                .build();
+
+	        given(userService.signUp(any(SignUpRequestDto.class)))
+	                .willThrow(new GlobalException(ErrorCode.NICKNAME_ALREADY_EXISTS));
+
+	        // when & then
+	        mockMvc.perform(post("/api/users/signup")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request))
+	                        .with(csrf()))
+	                .andExpect(status().isConflict()) // 409
+	                .andExpect(jsonPath("$.message").value("이미 사용 중인 닉네임입니다."));
+	    }
+	}
+
+	
+	@Nested
+	@DisplayName("인증 실패 테스트")
+	class UnauthorizedAccessTest {
+
+	    @Test
+	    @WithAnonymousUser
+	    @DisplayName("로그인하지 않고 /me 요청 시 401 Unauthorized")
+	    void getMyInfoWithoutLogin() throws Exception {
+	        mockMvc.perform(get("/api/users/me").with(csrf()))
+	                .andExpect(status().isUnauthorized());
+	    }
+
+	    @Test
+	    @WithAnonymousUser
+	    @DisplayName("로그인하지 않고 닉네임 수정 시 401 Unauthorized")
+	    void updateNicknameWithoutLogin() throws Exception {
+	        UpdateNicknameRequestDto request = UpdateNicknameRequestDto.builder()
+	                .nickname("newnick")
+	                .build();
+
+	        mockMvc.perform(patch("/api/users/me")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request))
+	                        .with(csrf()))
+	                .andExpect(status().isUnauthorized());
+	    }
+
+	    @Test
+	    @WithAnonymousUser
+	    @DisplayName("로그인하지 않고 회원 탈퇴 요청 시 401 Unauthorized")
+	    void deleteUserWithoutLogin() throws Exception {
+	        mockMvc.perform(delete("/api/users/me").with(csrf()))
+	                .andExpect(status().isUnauthorized());
+	    }
+	}
+
+	
+	@Nested
+	@DisplayName("입력값 검증 실패 테스트")
+	class ValidationFailTest {
+
+	    @Test
+	    @WithMockUser
+	    @DisplayName("닉네임이 null일 경우 400 Bad Request")
+	    void updateNicknameNull() throws Exception {
+	        String invalidJson = "{\"nickname\": null}";
+
+	        mockMvc.perform(patch("/api/users/me")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(invalidJson)
+	                        .with(csrf()))
+	                .andExpect(status().isBadRequest());
+	    }
+
+	    @Test
+	    @WithMockUser
+	    @DisplayName("닉네임이 공백일 경우 400 Bad Request")
+	    void updateNicknameBlank() throws Exception {
+	        UpdateNicknameRequestDto request = UpdateNicknameRequestDto.builder()
+	                .nickname(" ")
+	                .build();
+
+	        mockMvc.perform(patch("/api/users/me")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request))
+	                        .with(csrf()))
+	                .andExpect(status().isBadRequest());
+	    }
+
+	    @Test
+	    @WithMockUser
+	    @DisplayName("회원가입 시 잘못된 이메일 포맷 → 400")
+	    void signUpWithInvalidEmailFormat() throws Exception {
+	        SignUpRequestDto request = SignUpRequestDto.builder()
+	                .email("invalid-email")  // 이메일 형식 아님
+	                .password("password123!")
+	                .nickname("nick")
+	                .build();
+
+	        mockMvc.perform(post("/api/users/signup")
+	                        .contentType(MediaType.APPLICATION_JSON)
+	                        .content(objectMapper.writeValueAsString(request))
+	                        .with(csrf()))
+	                .andExpect(status().isBadRequest());
+	    }
+	}
+
+	
+	@Nested
+	@DisplayName("예상치 못한 예외 발생 테스트")
+	class UnexpectedErrorTest {
+
+	    @Test
+	    @WithMockUser
+	    @DisplayName("내 정보 조회 중 NullPointerException 발생 시 500 반환")
+	    void getMyInfoInternalError() throws Exception {
+	        given(userService.getMyInfo(any())).willThrow(new NullPointerException("테스트용 NPE"));
+
+	        mockMvc.perform(get("/api/users/me").with(csrf()))
+	                .andExpect(status().isInternalServerError())
+	                .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다.")); // GlobalExceptionHandler
+	    }
+
+	    @Test
+	    @WithMockUser
+	    @DisplayName("회원 탈퇴 중 예상치 못한 RuntimeException 발생 시 500 반환")
+	    void deleteUserThrowsUnexpectedError() throws Exception {
+	        doThrow(new RuntimeException("DB 삭제 실패")).when(userService).deleteUser(any());
+
+	        mockMvc.perform(delete("/api/users/me").with(csrf()))
+	                .andExpect(status().isInternalServerError())
+	                .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."));
+	    }
+	}
+	
+	private RequestPostProcessor authenticatedUser(com.example.moneytalk.domain.User user) {
+	    return request -> {
+	        UsernamePasswordAuthenticationToken auth =
+	            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+	        SecurityContext context = SecurityContextHolder.createEmptyContext();
+	        context.setAuthentication(auth);
+	        SecurityContextHolder.setContext(context);
+	        return request;
+	    };
+	}
+
+
+
 }

@@ -670,6 +670,20 @@ Table favorite_products {
 - 소비 패턴 기반 예측/알림 연동
 - Redis 캐싱 및 예산 초과 알림 자동화 기능
 
+## ✅ 백엔드 완성도 강화 체크리스트
+
+- [ ] GlobalExceptionHandler 통일화
+- [ ] Swagger 문서 구체화
+- [ ] 구매 확정 로직 트랜잭션 리팩터링
+- [ ] 채팅 메시지 삭제/읽음 기능 구현
+- [ ] Redis Pub/Sub 확장성 고려 구조 보완
+- [ ] 알림(Notification) 시스템 추가
+- [ ] Toss Payments 연동(선택)
+- [ ] 서비스별 통합 테스트 추가
+- [ ] 실패 케이스 테스트 강화
+- [ ] Docker-Compose 구성
+- [ ] GitHub Actions CI/CD 구축
+
 ## 📌 차주 계획 (예정)
 - GitHub Actions + Docker + AWS 배포
 

@@ -18,27 +18,25 @@ import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ProductRequestDto;
 import com.example.moneytalk.dto.ProductResponseDto;
 import com.example.moneytalk.dto.ProductSearchRequestDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.LedgerRepository;
 import com.example.moneytalk.repository.ProductImageRepository;
 import com.example.moneytalk.repository.ProductRepository;
 import com.example.moneytalk.repository.PurchaseHistoryRepository;
 import com.example.moneytalk.repository.PurchaseRecordRepository;
+import com.example.moneytalk.type.ErrorCode;
 import com.example.moneytalk.type.LedgerType;
 import com.example.moneytalk.type.ProductStatus;
 import com.example.moneytalk.type.PurchaseType;
 
+import ch.qos.logback.core.spi.ErrorCodes;
 import lombok.RequiredArgsConstructor;
 
 /**
- * ProductService
- * 중고 상품의 등록, 조회, 수정, 상태 변경, 구매 확정 등의 핵심 비즈니스 로직을 처리하는 서비스입니다.
+ * ProductService 중고 상품의 등록, 조회, 수정, 상태 변경, 구매 확정 등의 핵심 비즈니스 로직을 처리하는 서비스입니다.
  *
- * [주요 기능]
- * - 상품 등록 (이미지 포함)
- * - 전체/단건 상품 조회
- * - 상품 상태 변경 (판매중, 예약중, 판매완료)
- * - 조건 기반 상품 검색
- * - 상품 구매 확정 및 관련 기록 저장 (가계부, 이력)
+ * [주요 기능] - 상품 등록 (이미지 포함) - 전체/단건 상품 조회 - 상품 상태 변경 (판매중, 예약중, 판매완료) - 조건 기반 상품
+ * 검색 - 상품 구매 확정 및 관련 기록 저장 (가계부, 이력)
  *
  * @author Daniel
  * @since 2025.04.15
@@ -54,13 +52,13 @@ public class ProductService {
 	private final PurchaseHistoryRepository purchaseHistoryRepository;
 	private final LedgerRepository ledgerRepository;
 
-    /**
-     * 새로운 상품을 등록하고, 등록된 상품 정보를 반환합니다.
-     *
-     * @param dto 상품 등록 요청 DTO
-     * @param user 등록자 (판매자)
-     * @return 등록된 상품의 응답 DTO
-     */
+	/**
+	 * 새로운 상품을 등록하고, 등록된 상품 정보를 반환합니다.
+	 *
+	 * @param dto  상품 등록 요청 DTO
+	 * @param user 등록자 (판매자)
+	 * @return 등록된 상품의 응답 DTO
+	 */
 	public ProductResponseDto createProduct(ProductRequestDto dto, User user) {
 		Product product = Product.builder().user(user).title(dto.getTitle()).description(dto.getDescription())
 				.price(dto.getPrice()).category(dto.getCategory()).location(dto.getLocation())
@@ -75,11 +73,11 @@ public class ProductService {
 				.sellerNickname(saved.getUser().getNickname()).build();
 	}
 
-    /**
-     * 전체 상품 목록을 최신순으로 조회합니다.
-     *
-     * @return 상품 응답 DTO 리스트
-     */
+	/**
+	 * 전체 상품 목록을 최신순으로 조회합니다.
+	 *
+	 * @return 상품 응답 DTO 리스트
+	 */
 	public List<ProductResponseDto> getAllProducts() {
 		List<Product> products = productRepository.findAllByOrderByCreatedAtDesc();
 
@@ -91,16 +89,16 @@ public class ProductService {
 		}).toList();
 	}
 
-    /**
-     * 상품 ID를 기준으로 상품 상세 정보를 조회합니다.
-     *
-     * @param productId 조회할 상품 ID
-     * @return 상품 응답 DTO
-     * @throws IllegalArgumentException 상품이 존재하지 않을 경우
-     */
+	/**
+	 * 상품 ID를 기준으로 상품 상세 정보를 조회합니다.
+	 *
+	 * @param productId 조회할 상품 ID
+	 * @return 상품 응답 DTO
+	 * @throws GlobalException 상품이 존재하지 않을 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
+	 */
 	public ProductResponseDto getProductById(Long productId) {
 		Product product = productRepository.findWithUserById(productId)
-				.orElseThrow(() -> new IllegalArgumentException("해당 상품을 찾을 수 없습니다."));
+				.orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		List<String> imageUrls = productImageRepository.findByProduct(product).stream().map(ProductImage::getImageUrl)
 				.toList();
@@ -108,34 +106,34 @@ public class ProductService {
 		return ProductResponseDto.from(product, imageUrls);
 	}
 
-    /**
-     * 상품의 판매 상태를 변경합니다. (SALE, RESERVED, SOLD 등)
-     * 요청 사용자와 등록자가 다르면 예외 발생
-     *
-     * @param productId 상품 ID
-     * @param status 변경할 상품 상태
-     * @param user 요청자 (판매자)
-     * @throws AccessDeniedException 권한 없음
-     */
+	/**
+	 * 상품의 판매 상태를 변경합니다. (SALE, RESERVED, SOLD 등) 요청 사용자와 등록자가 다르면 예외 발생
+	 *
+	 * @param productId 상품 ID
+	 * @param status    변경할 상품 상태
+	 * @param user      요청자 (판매자)
+	 * @throws GlobalException 상품이 없을 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
+	 * @throws GlobalException 권한 없음 {@link ErrorCode#PRODUCT_ACCESS_DENIED}
+	 */
 	@Transactional
 	public void updateProductStatus(Long productId, ProductStatus status, User user) {
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+				.orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		if (!product.getUser().getId().equals(user.getId())) {
-			throw new AccessDeniedException("상품 수정 권한이 없습니다.");
+			throw new GlobalException(ErrorCode.PRODUCT_ACCESS_DENIED);
 		}
 
 		product.setStatus(status);
 	}
 
-    /**
-     * 상품 등록과 동시에 이미지 파일들을 업로드하고 저장합니다.
-     *
-     * @param dto 상품 정보
-     * @param images 첨부 이미지 파일 리스트
-     * @param user 등록자
-     */
+	/**
+	 * 상품 등록과 동시에 이미지 파일들을 업로드하고 저장합니다.
+	 *
+	 * @param dto    상품 정보
+	 * @param images 첨부 이미지 파일 리스트
+	 * @param user   등록자
+	 */
 	@Transactional
 	public void createProductWithImages(ProductRequestDto dto, List<MultipartFile> images, User user) {
 		Product product = Product.builder().user(user).title(dto.getTitle()).description(dto.getDescription())
@@ -153,12 +151,12 @@ public class ProductService {
 		}
 	}
 
-    /**
-     * 조건 기반 상품 검색 기능
-     *
-     * @param request 검색 조건 DTO
-     * @return 검색된 상품 리스트
-     */
+	/**
+	 * 조건 기반 상품 검색 기능
+	 *
+	 * @param request 검색 조건 DTO
+	 * @return 검색된 상품 리스트
+	 */
 	public List<ProductResponseDto> searchProducts(ProductSearchRequestDto request) {
 		List<Product> products = productRepository.searchByConditions(request);
 
@@ -169,26 +167,26 @@ public class ProductService {
 		}).toList();
 	}
 
-    /**
-     * 상품 구매를 확정하고 관련 데이터를 모두 저장합니다.
-     * - 구매 기록, 상태 변경, 구매/판매 이력, 가계부 기록 포함
-     *
-     * @param productId 구매할 상품 ID
-     * @param buyer 구매자
-     * @throws IllegalStateException 이미 판매 완료된 경우
-     * @throws AccessDeniedException 본인 상품을 구매하려는 경우
-     */
+	/**
+	 * 상품 구매를 확정하고 관련 데이터를 모두 저장합니다. - 구매 기록, 상태 변경, 구매/판매 이력, 가계부 기록 포함
+	 *
+	 * @param productId 구매할 상품 ID
+	 * @param buyer     구매자
+	 * @throws GlobalException 상품을 찾을 수 없는 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
+	 * @throws GlobalException 이미 판매 완료된 경우 {@link ErrorCode#PRODUCT_ALREADY_SOLD}
+	 * @throws GlobalException 본인 상품을 구매하려는 경우 {@link ErrorCode#CANNOT_PURCHASE_OWN_PRODUCT}
+	 */
 	@Transactional
 	public void confirmPurchase(Long productId, User buyer) {
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
+				.orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		if (product.getStatus() == ProductStatus.SOLD) {
-			throw new IllegalStateException("이미 판매완료된 상품입니다.");
+			throw new GlobalException(ErrorCode.PRODUCT_ALREADY_SOLD);
 		}
 
 		if (product.getUser().getId().equals(buyer.getId())) {
-			throw new AccessDeniedException("본인의 상품은 구매 확정할 수 없습니다.");
+			throw new GlobalException(ErrorCode.CANNOT_PURCHASE_OWN_PRODUCT);
 		}
 
 		if (!purchaseRecordRepository.existsByProduct(product)) {

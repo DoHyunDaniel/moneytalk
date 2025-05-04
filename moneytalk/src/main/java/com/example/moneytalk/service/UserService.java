@@ -14,7 +14,9 @@ import com.example.moneytalk.dto.NicknameSuggestionResponseDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.dto.SignUpResponseDto;
 import com.example.moneytalk.dto.UserInfoResponseDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.UserRepository;
+import com.example.moneytalk.type.ErrorCode;
 import com.example.moneytalk.type.UserType;
 
 import lombok.RequiredArgsConstructor;
@@ -49,16 +51,17 @@ public class UserService {
      *
      * @param request 회원가입 요청 DTO (이메일, 비밀번호, 닉네임 포함)
      * @return 회원가입 결과 응답 DTO
-     * @throws IllegalArgumentException 이미 등록된 이메일인 경우 또는 닉네임이 중복된 경우
+     * @throws GlobalException 이미 이메일이 사용중일 때 {@link ErrorCode#EMAIL_ALREADY_EXISTS}
+     * @throws GlobalException 이미 닉네임이 사용중일 때 {@link ErrorCode#NICKNAME_ALREADY_EXISTS}
      */
 	public SignUpResponseDto signUp(SignUpRequestDto request) {
 	    if (userRepository.existsByEmail(request.getEmail())) {
-	        throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+	        throw new GlobalException(ErrorCode.EMAIL_ALREADY_EXISTS);
 	    }
 
 	    // 닉네임 중복 체크
 	    if (userRepository.existsByNickname(request.getNickname())) {
-	        throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+	        throw new GlobalException(ErrorCode.NICKNAME_ALREADY_EXISTS);
 	    }
 
 	    User user = User.builder()
@@ -106,14 +109,15 @@ public class UserService {
      *
      * @param request 로그인 요청 DTO (이메일, 비밀번호)
      * @return JWT 토큰, 이메일, 닉네임을 포함한 응답 DTO
-     * @throws IllegalArgumentException 이메일 존재 여부 또는 비밀번호 불일치 시
+     * @throws GlobalException 이메일이 존재하지 않을 때 {@link ErrorCode#EMAIL_NOT_FOUND}
+     * @throws GlobalException 비밀번호가 일치하지 않을 때 {@link ErrorCode#INVALID_PASSWORD}
      */
 	public LoginResponseDto signIn(LoginRequestDto request) {
 	    User user = userRepository.findByEmail(request.getEmail())
-	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
+	            .orElseThrow(() -> new GlobalException(ErrorCode.EMAIL_NOT_FOUND));
 
 	    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-	        throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+	        throw new GlobalException(ErrorCode.EMAIL_NOT_FOUND);
 	    }
 
 	    String token = jwtTokenProvider.createToken(user.getId(), user.getEmail());

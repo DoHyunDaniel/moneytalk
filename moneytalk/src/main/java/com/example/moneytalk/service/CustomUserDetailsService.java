@@ -5,7 +5,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.UserRepository;
+import com.example.moneytalk.type.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,12 +35,12 @@ public class CustomUserDetailsService implements UserDetailsService {
      *
      * @param email 사용자 이메일
      * @return UserDetails 객체 (Spring Security 인증 정보)
-     * @throws UsernameNotFoundException 사용자가 존재하지 않을 경우 발생
+     * @throws GlobalException 사용자가 존재하지 않을 경우 발생 {@link ErrorCode#USER_NOT_FOUND}
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new GlobalException(ErrorCode.USER_NOT_FOUND));
     }
 
     /**
@@ -47,10 +49,10 @@ public class CustomUserDetailsService implements UserDetailsService {
      *
      * @param userId 사용자 ID
      * @return UserDetails 객체
-     * @throws UsernameNotFoundException 사용자가 존재하지 않을 경우 발생
+     * @throws GlobalException 사용자가 존재하지 않을 경우 발생 {@link ErrorCode#USER_NOT_FOUND}
      */
     public UserDetails loadUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new GlobalException(ErrorCode.USER_NOT_FOUND));
     }
 }

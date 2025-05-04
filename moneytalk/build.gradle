@@ -77,6 +77,11 @@ tasks.named('test') {
 
 sourceSets {
     main.java.srcDirs += querydslDir
+        test {
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
 }
 
 tasks.withType(JavaCompile) {

@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import com.example.moneytalk.domain.FavoriteProduct;
 import com.example.moneytalk.domain.Product;
 import com.example.moneytalk.domain.User;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.FavoriteProductRepository;
 import com.example.moneytalk.repository.ProductRepository;
+import com.example.moneytalk.type.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,11 +44,11 @@ public class FavoriteService {
      * @param productId 찜할 상품 ID
      * @param user 요청 사용자
      * @return true = 찜 추가, false = 찜 해제
-     * @throws IllegalArgumentException 상품이 존재하지 않을 경우
+     * @throws GlobalException 상품이 존재하지 않을 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
      */
     public boolean toggleFavorite(Long productId, User user) {
         Product product = productRepo.findById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
+            .orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
 
         Optional<FavoriteProduct> existing = favoriteRepo.findByUserAndProduct(user, product);
 
@@ -70,11 +72,11 @@ public class FavoriteService {
      *
      * @param productId 상품 ID
      * @return 찜 개수 (long)
-     * @throws IllegalArgumentException 상품이 존재하지 않을 경우
+     * @throws GlobalException 상품이 존재하지 않을 경우 {@link ErrorCode#PRODUCT_NOT_FOUND}
      */
     public long getFavoriteCount(Long productId) {
         Product product = productRepo.findById(productId)
-            .orElseThrow(() -> new IllegalArgumentException("상품 없음"));
+            .orElseThrow(() -> new GlobalException(ErrorCode.PRODUCT_NOT_FOUND));
         return favoriteRepo.countByProduct(product);
     }
 }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MoneyTalk API Documentation</title>
+
+  <!-- Redoc 스크립트 -->
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+
+  <!-- 구글 폰트 추가 -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Open Sans', sans-serif;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #4A90E2; /* MoneyTalk 메인 컬러 */
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    header img {
+      height: 36px;
+      margin-right: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 상단 로고 + 제목 영역 -->
+  <header>
+    <img src="./moneytalk-logo.png" alt="MoneyTalk Logo">
+    MoneyTalk API Documentation
+  </header>
+  <section style="padding: 20px; background-color: #f8f9fa; border-bottom: 1px solid #ddd;">
+    <h1>MoneyTalk API Documentation</h1>
+    <p>
+      MoneyTalk는 사용자 간 중고 거래와 가계부 관리를 지원하는 통합 플랫폼입니다.  
+      본 문서는 MoneyTalk API v1의 엔드포인트, 요청/응답 형식, 인증 방식을 상세히 설명합니다.
+    </p>
+  </section>
+  <!-- Redoc 컨테이너 -->
+  <div id="redoc-container"></div>
+
+  <!-- Redoc 초기화 스크립트 -->
+  <script>
+    Redoc.init('http://localhost:8080/v3/api-docs', {
+      expandResponses: "200,201",
+      hideDownloadButton: true,
+      theme: {
+        colors: {
+          primary: {
+            main: "#4A90E2"
+          }
+        },
+        typography: {
+          fontFamily: "Open Sans, sans-serif"
+        }
+      }
+    }, document.getElementById('redoc-container'));
+  </script>
+
+</body>
+</html>

@@ -7,7 +7,9 @@ import com.example.moneytalk.domain.Budget;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.BudgetRequestDto;
 import com.example.moneytalk.dto.BudgetResponseDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.BudgetRepository;
+import com.example.moneytalk.type.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,12 +54,12 @@ public class BudgetService {
      * @param user  조회 대상 사용자
      * @param month 조회할 월 (yyyy-MM 형식)
      * @return 예산 응답 DTO
-     * @throws IllegalArgumentException 예산 정보가 존재하지 않을 경우
+     * @throws GlobalException 예산 정보가 존재하지 않을 경우 {@link ErrorCode#BUDGET_NOT_FOUND}
      */
     @Transactional(readOnly = true)
     public BudgetResponseDto getBudget(User user, String month) {
         Budget budget = budgetRepository.findByUserAndMonth(user, month)
-                .orElseThrow(() -> new IllegalArgumentException("예산 정보가 없습니다."));
+                .orElseThrow(() -> new GlobalException(ErrorCode.BUDGET_NOT_FOUND));
         return BudgetResponseDto.from(budget);
     }
 }

@@ -12,13 +12,18 @@ import com.example.moneytalk.domain.Product;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ChatRoomDetailDto;
 import com.example.moneytalk.dto.ChatRoomSummaryDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.ChatMessageRepository;
 import com.example.moneytalk.repository.ChatRoomRepository;
+import com.example.moneytalk.type.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
 /**
  * 채팅방 생성, 조회, 읽음 처리 등의 비즈니스 로직을 담당하는 서비스 클래스입니다.
+ * 
+ * @author Daniel
+ * @since 2025.04.15
  */
 @Service
 @RequiredArgsConstructor
@@ -117,16 +122,16 @@ public class ChatRoomService {
 	 * @param roomId 채팅방 ID
 	 * @param loginUser 현재 로그인한 사용자
 	 * @return 채팅방 상세 정보 DTO
-	 * @throws IllegalArgumentException 채팅방이 존재하지 않는 경우
-	 * @throws SecurityException 사용자가 채팅방 참여자가 아닌 경우
+	 * @throws GlobalException 채팅방이 존재하지 않는 경우 {@link ErrorCode#CHATROOM_NOT_FOUND}
+	 * @throws GlobalException 사용자가 채팅방 참여자가 아닌 경우 {@link ErrorCode#CHATROOM_ACCESS_DENIED}
 	 */
 	@Transactional(readOnly = true)
 	public ChatRoomDetailDto getChatRoomDetail(Long roomId, User loginUser) {
 	    ChatRoom room = chatRoomRepository.findById(roomId)
-	        .orElseThrow(() -> new IllegalArgumentException("채팅방이 존재하지 않습니다."));
+	        .orElseThrow(() -> new GlobalException(ErrorCode.CHATROOM_NOT_FOUND));
 
 	    if (!room.getBuyer().equals(loginUser) && !room.getSeller().equals(loginUser)) {
-	        throw new SecurityException("접근 권한이 없습니다.");
+	        throw new GlobalException(ErrorCode.CHATROOM_ACCESS_DENIED);
 	    }
 
 	    User opponent = resolveOpponent(room, loginUser);

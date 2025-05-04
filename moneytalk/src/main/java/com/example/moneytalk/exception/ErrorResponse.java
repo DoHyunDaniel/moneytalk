@@ -2,21 +2,32 @@ package com.example.moneytalk.exception;
 
 import java.time.LocalDateTime;
 
+import com.example.moneytalk.type.ErrorCode;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Schema(description = "에러 응답")
 @Builder
 @Getter
 @AllArgsConstructor
-@NoArgsConstructor
 public class ErrorResponse {
-    private LocalDateTime timestamp;
-    private int status;
-    private String error;
-    private String message;
-    private String path;
+    private final LocalDateTime timestamp;
+    private final int status;
+    private final String error;
+    private final String message;
+    private final String path;
+    
+
+    public static ErrorResponse of(ErrorCode errorCode, String path) {
+        return ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(errorCode.getStatus())
+                .error(errorCode.getError())
+                .message(errorCode.getMessage())
+                .path(path)
+                .build();
+    }
 }

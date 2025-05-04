@@ -1,16 +1,17 @@
 package com.example.moneytalk.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
@@ -58,6 +59,19 @@ public class GlobalExceptionHandler {
                 "서버 내부 오류가 발생했습니다.", request.getRequestURI());
     }
 
+    // GlobalException 예외 처리
+    @ExceptionHandler(GlobalException.class)
+    public ResponseEntity<ErrorResponse> handleGlobalException(GlobalException ex, HttpServletRequest request) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(ex.getErrorCode().getStatus())
+                .error(ex.getErrorCode().getError())
+                .message(ex.getErrorCode().getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(ex.getErrorCode().getStatus()).body(response);
+    }
+    
     // 공통 응답 생성 메서드
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, String path) {
         ErrorResponse response = ErrorResponse.builder()
