@@ -1,4 +1,4 @@
-name: MoneyTalk Backend CI
+name: MoneyTalk Backend CI/CD
 
 on:
   push:
@@ -21,12 +21,11 @@ jobs:
         java-version: '17'
 
     - name: Grant permission for gradlew
-      run: chmod +x ./moneytalk/gradlew   # backend 폴더 안 gradlew 실행권한
+      run: chmod +x ./moneytalk/gradlew
 
     - name: Build with Gradle
-      working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
+      working-directory: ./moneytalk
       run: ./gradlew build -x test
-  
-    # - name: Run tests
-    #   working-directory: ./moneytalk      # 🔥 backend 폴더 안에서 실행
-    #   run: ./gradlew test
+
+    - name: Docker build
+      run: docker build -t moneytalk-app ./moneytalk
