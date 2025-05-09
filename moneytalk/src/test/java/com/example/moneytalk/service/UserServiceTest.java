@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.LoginRequestDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
+import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.UserRepository;
 import com.example.moneytalk.config.JwtTokenProvider;
 import com.example.moneytalk.type.UserType;
@@ -77,7 +78,7 @@ class UserServiceTest {
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
         // then
-        assertThrows(IllegalArgumentException.class, () -> userService.signUp(request));
+        assertThrows(GlobalException.class, () -> userService.signUp(request));
     }
 
     @Test
@@ -146,7 +147,7 @@ class UserServiceTest {
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
 
         // then
-        assertThrows(IllegalArgumentException.class, () -> userService.signIn(request));
+        assertThrows(GlobalException.class, () -> userService.signIn(request));
     }
 
     @Test
@@ -168,6 +169,6 @@ class UserServiceTest {
         when(passwordEncoder.matches(request.getPassword(), user.getPassword())).thenReturn(false);
 
         // then
-        assertThrows(IllegalArgumentException.class, () -> userService.signIn(request));
+        assertThrows(GlobalException.class, () -> userService.signIn(request));
     }
 }

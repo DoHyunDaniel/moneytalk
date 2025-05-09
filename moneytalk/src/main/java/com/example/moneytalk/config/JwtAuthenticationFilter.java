@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		String requestUri = request.getRequestURI();
-
+		log.info("🔥 JwtAuthenticationFilter 작동 - URI: {}", request.getRequestURI());
 		// WebSocket 연결은 토큰 검사 패스
 		if (requestUri.startsWith("/ws-stomp") || requestUri.equals("/api/users/signup")) {
 			filterChain.doFilter(request, response);

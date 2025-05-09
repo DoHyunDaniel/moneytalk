@@ -1,15 +1,22 @@
 package com.example.moneytalk.dto;
 
 import com.example.moneytalk.type.ProductStatus;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 상품 상태 변경 요청 DTO입니다.
  * 상품을 판매중, 예약중, 판매 완료 상태로 변경할 때 사용됩니다.
  */
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "상품 상태 변경 요청 DTO")
 public class ProductStatusUpdateRequestDto {
 
@@ -19,5 +26,6 @@ public class ProductStatusUpdateRequestDto {
         example = "SOLD",
         required = true
     )
+    
     private ProductStatus status;
 }
