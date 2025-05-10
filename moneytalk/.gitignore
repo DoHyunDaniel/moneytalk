@@ -39,6 +39,7 @@ application.yml
 application-*.yml
 application.properties
 application-*.properties
+application-local.yml
 
 # Others
 *.class

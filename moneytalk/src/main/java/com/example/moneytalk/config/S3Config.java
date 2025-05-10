@@ -8,17 +8,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 
-import io.github.cdimascio.dotenv.Dotenv;
-
 @Configuration
 public class S3Config {
 
-    private final Dotenv dotenv = Dotenv.load();
-
     @Bean
     public AmazonS3 amazonS3() {
-        String accessKey = dotenv.get("AWS_ACCESS_KEY");
-        String secretKey = dotenv.get("AWS_SECRET_KEY");
+    	String accessKey = System.getenv("AWS_ACCESS_KEY");
+    	String secretKey = System.getenv("AWS_SECRET_KEY");
         String region = "us-east-1";
 
         if (accessKey == null || secretKey == null) {

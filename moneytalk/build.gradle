@@ -61,9 +61,6 @@ dependencies {
 	// AWS S3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
-	// .env 환경변수
-	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
-
 	// QueryDSL
 	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'

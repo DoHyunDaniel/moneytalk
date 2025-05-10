@@ -4,7 +4,6 @@ import java.util.Date;
 
 import org.springframework.stereotype.Component;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,8 +14,8 @@ public class JwtTokenProvider {
 
     private final String secretKey;
 
-    public JwtTokenProvider(Dotenv dotenv) {
-        this.secretKey = dotenv.get("JWT_SECRET");
+    public JwtTokenProvider() {
+    	this.secretKey = System.getenv("JWT_SECRET_KEY");
     }
 
     private final long expiration = 1000L * 60 * 60 * 24; // 24시간
