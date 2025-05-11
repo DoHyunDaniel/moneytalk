@@ -47,7 +47,7 @@ jobs:
       working-directory: ./moneytalk
 
     - name: Run tests with full stacktrace
-      run: ./gradlew test -Dspring.profiles.active=test --stacktrace
+      run: ./gradlew test -Dspring.profiles.active=test --stacktrace --info
       working-directory: ./moneytalk
 
     - name: Generate Jacoco coverage report
