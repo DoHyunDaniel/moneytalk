@@ -46,8 +46,8 @@ jobs:
       run: chmod +x ./gradlew
       working-directory: ./moneytalk
 
-    - name: Run tests with profile=test
-      run: ./gradlew test -Dspring.profiles.active=test
+    - name: Run tests with full stacktrace
+      run: ./gradlew test -Dspring.profiles.active=test --stacktrace
       working-directory: ./moneytalk
 
     - name: Generate Jacoco coverage report
