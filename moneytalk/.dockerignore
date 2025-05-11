@@ -1,0 +1,22 @@
+# 🔒 기본적으로 무시해야 할 파일들
+.git
+.gitignore
+.idea
+*.iml
+
+# 🛠 빌드 산출물 관련
+target
+out
+
+# 🧪 테스트 리포트
+test-output
+
+# 📦 캐시 파일
+.gradle
+.cache
+logs
+node_modules
+*.log
+
+# 🧯 Docker build 시 불필요한 파일
+docker-compose.override.yml
