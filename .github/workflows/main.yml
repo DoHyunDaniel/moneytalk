@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
       DB_URL: ${{ secrets.DB_URL }}
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -19,6 +20,20 @@ jobs:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+
+    services:
+      redis:
+        image: redis:6.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout source
       uses: actions/checkout@v3
@@ -30,11 +45,20 @@ jobs:
         java-version: '17'
 
     - name: Grant permission for gradlew
-      run: chmod +x ./moneytalk/gradlew
-
-    - name: Build with Gradle
+      run: chmod +x ./gradlew
       working-directory: ./moneytalk
-      run: ./gradlew build -x test
+
+    - name: ✅ Verify application-test.yml exists
+      run: ls -al ./src/test/resources/
+      working-directory: ./moneytalk
+
+    - name: Run tests with full stacktrace
+      run: ./gradlew test -Dspring.profiles.active=test --stacktrace --info
+      working-directory: ./moneytalk
+
+    - name: Generate Jacoco coverage report
+      run: ./gradlew jacocoTestReport
+      working-directory: ./moneytalk
 
     - name: Docker build
       run: docker build -t moneytalk-app ./moneytalk
