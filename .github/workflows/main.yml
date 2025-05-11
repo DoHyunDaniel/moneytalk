@@ -46,12 +46,9 @@ jobs:
       run: chmod +x ./gradlew
       working-directory: ./moneytalk
 
-    - name: Build with Gradle
-      run: ./gradlew build -x test
+    - name: Run tests with profile=test
+      run: ./gradlew test -Dspring.profiles.active=test
       working-directory: ./moneytalk
-
-    - name: Check environment
-      run: echo "DB_URL is $DB_URL"
 
     - name: Generate Jacoco coverage report
       run: ./gradlew jacocoTestReport
@@ -59,3 +56,4 @@ jobs:
 
     - name: Docker build
       run: docker build -t moneytalk-app ./moneytalk
+
