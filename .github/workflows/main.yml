@@ -38,3 +38,6 @@ jobs:
 
     - name: Docker build
       run: docker build -t moneytalk-app ./moneytalk
+
+    - name: Generate Jacoco coverage report
+      run: ./gradlew jacocoTestReport
