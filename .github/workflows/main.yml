@@ -50,6 +50,9 @@ jobs:
       run: ./gradlew build -x test
       working-directory: ./moneytalk
 
+    - name: Check environment
+      run: echo "DB_URL is $DB_URL"
+
     - name: Generate Jacoco coverage report
       run: ./gradlew jacocoTestReport
       working-directory: ./moneytalk
