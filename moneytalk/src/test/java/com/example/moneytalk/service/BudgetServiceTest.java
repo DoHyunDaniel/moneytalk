@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.example.moneytalk.domain.Budget;
 import com.example.moneytalk.domain.User;
@@ -18,6 +19,7 @@ import com.example.moneytalk.dto.BudgetRequestDto;
 import com.example.moneytalk.dto.BudgetResponseDto;
 import com.example.moneytalk.repository.BudgetRepository;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class BudgetServiceTest {
 

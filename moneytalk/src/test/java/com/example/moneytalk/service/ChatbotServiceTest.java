@@ -20,6 +20,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,6 +28,7 @@ import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ChatbotSummaryResponseDto;
 import com.example.moneytalk.dto.LedgerMonthlySummaryResponseDto;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class ChatbotServiceTest {
 

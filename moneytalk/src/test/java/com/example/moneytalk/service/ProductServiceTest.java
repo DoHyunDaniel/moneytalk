@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.moneytalk.config.S3Uploader;
@@ -36,6 +37,7 @@ import com.example.moneytalk.type.ErrorCode;
 import com.example.moneytalk.type.ProductStatus;
 import com.example.moneytalk.type.PurchaseType;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 

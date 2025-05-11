@@ -4,12 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.example.moneytalk.config.S3Uploader;
 import com.example.moneytalk.domain.Product;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.repository.LedgerRepository;
@@ -26,6 +32,18 @@ import com.example.moneytalk.type.PurchaseType;
 @ActiveProfiles("test") 
 class ProductServiceIntegrationTest {
 
+    @MockBean
+    private AmazonS3 amazonS3;
+    
+    @MockBean
+    private S3Uploader s3Uploader;
+    
+    @MockBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+    @MockBean
+    private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    
     @Autowired
     private ProductService productService;
 
@@ -44,6 +62,7 @@ class ProductServiceIntegrationTest {
     @Autowired
     private LedgerRepository ledgerRepository;
 
+    @DisplayName("상품 구매 시 상태 변경 및 기록 생성 확인")
     @Test
     void confirmPurchase_정상동작_통합테스트() {
         // given

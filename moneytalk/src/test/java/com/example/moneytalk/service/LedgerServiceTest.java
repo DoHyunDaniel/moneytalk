@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.example.moneytalk.domain.Budget;
 import com.example.moneytalk.domain.Ledger;
@@ -27,6 +28,7 @@ import com.example.moneytalk.repository.BudgetRepository;
 import com.example.moneytalk.repository.LedgerRepository;
 import com.example.moneytalk.type.LedgerType;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class LedgerServiceTest {
 

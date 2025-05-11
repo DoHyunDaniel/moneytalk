@@ -1,10 +1,14 @@
 package com.example.moneytalk.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,15 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
+import com.example.moneytalk.config.JwtTokenProvider;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.LoginRequestDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.UserRepository;
-import com.example.moneytalk.config.JwtTokenProvider;
 import com.example.moneytalk.type.UserType;
 
+@ActiveProfiles("test")
 class UserServiceTest {
 
     @InjectMocks

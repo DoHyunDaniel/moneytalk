@@ -24,9 +24,13 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.example.moneytalk.config.S3Uploader;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.dto.ProductRequestDto;
 import com.example.moneytalk.dto.ProductResponseDto;
@@ -41,6 +45,16 @@ import com.example.moneytalk.type.UserType;
 @ActiveProfiles("test")
 class ProductControllerTest {
 
+	@MockBean private ClientRegistrationRepository clientRegistrationRepository;
+	
+	@MockBean private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+	
+    @MockBean
+    private AmazonS3 amazonS3;
+    
+    @MockBean
+    private S3Uploader s3Uploader;
+	
 	@Autowired
 	private MockMvc mockMvc;
 

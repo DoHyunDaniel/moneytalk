@@ -8,9 +8,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.example.moneytalk.config.S3Uploader;
 import com.example.moneytalk.domain.User;
 import com.example.moneytalk.type.UserType;
 
@@ -25,8 +30,21 @@ import com.example.moneytalk.type.UserType;
 	    "openai.api.key=dummy"
 	})
 @Transactional
+@ActiveProfiles("test")
 class UserRepositoryTest {
 
+    @MockBean
+    private AmazonS3 amazonS3;
+    
+    @MockBean
+    private S3Uploader s3Uploader;
+    
+    @MockBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+    @MockBean
+    private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    
     @Autowired
     private UserRepository userRepository;
 
