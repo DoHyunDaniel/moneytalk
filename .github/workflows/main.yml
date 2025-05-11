@@ -9,11 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: moneytalk
-    
+
     env:
       DB_URL: ${{ secrets.DB_URL }}
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -24,6 +20,18 @@ jobs:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    services:
+      redis:
+        image: redis:6.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout source
       uses: actions/checkout@v3
@@ -35,14 +43,16 @@ jobs:
         java-version: '17'
 
     - name: Grant permission for gradlew
-      run: chmod +x ./moneytalk/gradlew
+      run: chmod +x ./gradlew
+      working-directory: ./moneytalk
 
     - name: Build with Gradle
-      working-directory: ./moneytalk
       run: ./gradlew build -x test
-
-    - name: Docker build
-      run: docker build -t moneytalk-app ./moneytalk
+      working-directory: ./moneytalk
 
     - name: Generate Jacoco coverage report
       run: ./gradlew jacocoTestReport
+      working-directory: ./moneytalk
+
+    - name: Docker build
+      run: docker build -t moneytalk-app ./moneytalk
