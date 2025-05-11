@@ -48,12 +48,12 @@ jobs:
       run: chmod +x ./gradlew
       working-directory: ./moneytalk
 
-    - name: ✅ Verify application-test.yml exists
-      run: ls -al ./src/test/resources/
+    - name: Run tests
+      run: ./gradlew test -Dspring.profiles.active=test
       working-directory: ./moneytalk
 
-    - name: Run tests with full stacktrace
-      run: ./gradlew test -Dspring.profiles.active=test --stacktrace --info
+    - name: Build jar with Gradle
+      run: ./gradlew build -x test
       working-directory: ./moneytalk
 
     - name: Generate Jacoco coverage report
