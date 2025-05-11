@@ -41,6 +41,9 @@ application.properties
 application-*.properties
 application-local.yml
 
+# 테스트 전용 설정은 포함 허용
+!src/test/resources/application-test.yml
+
 # Others
 *.class
 *.jar
@@ -48,3 +51,4 @@ application-local.yml
 *.ear
 
 /build/generated/
+
