@@ -9,7 +9,7 @@
 ![AWS](https://img.shields.io/badge/Infra-AWS-orange)
 ![Swagger](https://img.shields.io/badge/API-Docs-yellow)
 ![WebSocket](https://img.shields.io/badge/Realtime-Chat-green)
-[![MoneyTalk Backend CI](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/ci.yml/badge.svg)](https://github.com/DoHyunDaniel/moneytalk/actions)
+[![MoneyTalk Backend CI/CD](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml/badge.svg)](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml)
 
 ---
 
