@@ -73,3 +73,8 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/moneytalk-backend:latest ./moneytalk
         docker push ${{ secrets.DOCKER_USERNAME }}/moneytalk-backend:latest  
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/reports/jacoco/test/jacocoTestReport.xml
