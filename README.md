@@ -671,6 +671,106 @@ WebSocket만 사용할 경우 **단일 서버**에서는 간단하지만,
 
 ---
 
+## 🚀 CI/CD & 배포 자동화
+
+### ✅ CI (GitHub Actions 기반)
+
+* `main` 또는 `feature/**` 브랜치 Push 시 자동으로 동작
+* Gradle 빌드 및 테스트, Redis 서비스 포함
+* Jacoco를 통한 테스트 커버리지 리포트 생성
+* GitHub Secrets로 환경 변수 관리
+* 하위 디렉토리 대응을 위한 `working-directory` 설정 포함
+
+```yaml
+defaults:
+  run:
+    working-directory: moneytalk
+```
+
+### 📈 Test Coverage (Jacoco)
+
+* `jacocoTestReport` → HTML 리포트 자동 생성 (`/build/reports/...`)
+* `finalizedBy` 설정을 통해 테스트 후 리포트 자동 실행
+
+### 🐳 Docker & Compose
+
+* 경량 Alpine 기반 JDK 이미지 사용
+* 빌드된 JAR 파일을 `app.jar`로 복사하여 실행
+
+```dockerfile
+FROM eclipse-temurin:17-jdk-alpine
+ARG JAR_FILE=build/libs/moneytalk-0.0.1-SNAPSHOT.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+* `docker-compose.yml` 내 Redis, App 통합 및 포트 매핑
+
+### ☁️ CD (EC2 자동 배포 성공 사례)
+
+* GitHub Actions 내 `deploy.yml` 워크플로에서 배포 자동화 완료
+* DockerHub에서 최신 이미지 Pull 후 실행
+
+```yaml
+- name: Deploy to EC2
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ec2-user
+    key: ${{ secrets.EC2_KEY }}
+    script: |
+      docker pull kdhdaniel/moneytalk-backend:latest
+      cd ~/moneytalk-deploy
+      docker-compose down
+      docker-compose up -d
+```
+
+✅ `git push` → CI → DockerHub Push → EC2 배포까지 자동화 완료
+
+---
+
+### 🐞 TroubleShooting 기록
+
+#### 1. `COPY` 실패 오류 (Dockerfile)
+
+* 경로 문제 → working-directory 누락으로 인한 jar 경로 mismatch
+* 해결: `defaults.run.working-directory` 설정 추가
+
+#### 2. Redis `localhost` 연결 실패
+
+* 컨테이너 내부는 자기 자신을 의미 → `redis.host=redis` 로 수정 필요
+
+#### 3. GitHub Actions 환경 변수 오류
+
+* `.env` 미적용 상태에서 실행되어 오류 → `secrets` 로 주입 해결
+
+#### 4. SSH 접속 오류
+
+* pem 권한 (`chmod 400`) 또는 포트 허용 누락 → EC2 보안 그룹 확인
+
+---
+
+### 🐋 DockerHub 자동 Push 설정
+
+```yaml
+- name: Log in to DockerHub
+  uses: docker/login-action@v3
+  with:
+    username: ${{ secrets.DOCKER_USERNAME }}
+    password: ${{ secrets.DOCKER_PASSWORD }}
+
+- name: Build and Push Docker Image
+  run: |
+    docker build -t kdhdaniel/moneytalk-backend:latest .
+    docker push kdhdaniel/moneytalk-backend:latest
+```
+
+* DockerHub에 최신 이미지 자동 업로드
+* EC2에서 Pull → Compose로 실행 가능
+
+✅ 개발 → Push → DockerHub → EC2 자동 배포 파이프라인 완성
+
+---
 # 📷 데모 스크린샷
 
 - ✅ 프론트 채팅 전송 화면
