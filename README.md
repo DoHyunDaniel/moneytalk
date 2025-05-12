@@ -183,7 +183,7 @@ GitHub Push → GitHub Actions → Docker Hub → EC2 SSH → docker-compose up
 /home/ec2-user/moneytalk-deploy/
 ├── docker-compose.yml   # Redis + Backend 컨테이너 정의
 ├── .env                 # 환경 변수 설정 파일
-
+```
 ---
 
 ## [ 개발 계획 - 5주 ]
