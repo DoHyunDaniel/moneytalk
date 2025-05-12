@@ -9,7 +9,9 @@
 ![AWS](https://img.shields.io/badge/Infra-AWS-orange)
 ![Swagger](https://img.shields.io/badge/API-Docs-yellow)
 ![WebSocket](https://img.shields.io/badge/Realtime-Chat-green)
-[![MoneyTalk Backend CI](https://github.com/깃허브유저명/레포지토리명/actions/workflows/ci.yml/badge.svg)](https://github.com/깃허브유저명/레포지토리명/actions)
+[![MoneyTalk Backend CI/CD](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml/badge.svg)](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml)
+[![Deploy](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/deploy.yml/badge.svg)](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/deploy.yml)
+[![codecov](https://codecov.io/gh/DoHyunDaniel/moneytalk/branch/main/graph/badge.svg)](https://codecov.io/gh/DoHyunDaniel/moneytalk)
 
 ---
 
@@ -144,6 +146,46 @@
 - Swagger UI: `/swagger-ui/index.html`
 - JWT 인증 필요 API → Swagger Authorize 버튼 사용 (Bearer token)
 
+---
+## 🚀 배포 자동화 구성 (CI/CD with GitHub Actions + Docker + AWS EC2)
+
+배포는 GitHub Actions를 기반으로 완전 자동화되어 있습니다.  
+코드를 `main` 브랜치에 push 하면, 다음과 같은 순서로 배포가 진행됩니다.
+
+### 📦 전체 배포 흐름
+
+GitHub Push → GitHub Actions → Docker Hub → EC2 SSH → docker-compose up
+
+---
+
+### ⚙️ 1. CI 구성 (Continuous Integration)
+
+| 단계 | 설명 |
+|------|------|
+| ✅ 테스트 실행 | `./gradlew test`로 전체 테스트 수행 |
+| ✅ 빌드 | `./gradlew build`로 `.jar` 파일 생성 |
+| ✅ Docker Build | Docker 이미지 빌드 (`moneytalk-backend:latest`) |
+| ✅ Docker Push | Docker Hub로 푸시 (`kdhdaniel/moneytalk-backend:latest`) |
+
+---
+
+### 🚀 2. CD 구성 (Continuous Deployment)
+
+| 단계 | 설명 |
+|------|------|
+| ✅ SSH 접속 | GitHub Actions에서 EC2 서버에 비밀 키를 이용해 자동 접속 |
+| ✅ 이미지 Pull | Docker Hub에서 최신 이미지 pull |
+| ✅ 서비스 재시작 | 기존 컨테이너 종료 후 `docker-compose up -d`로 재시작 |
+
+---
+
+### 📂 EC2 배포 디렉토리 구조
+
+```bash
+/home/ec2-user/moneytalk-deploy/
+├── docker-compose.yml   # Redis + Backend 컨테이너 정의
+├── .env                 # 환경 변수 설정 파일
+```
 ---
 
 ## [ 개발 계획 - 5주 ]
@@ -671,6 +713,106 @@ WebSocket만 사용할 경우 **단일 서버**에서는 간단하지만,
 
 ---
 
+## 🚀 CI/CD & 배포 자동화
+
+### ✅ CI (GitHub Actions 기반)
+
+* `main` 또는 `feature/**` 브랜치 Push 시 자동으로 동작
+* Gradle 빌드 및 테스트, Redis 서비스 포함
+* Jacoco를 통한 테스트 커버리지 리포트 생성
+* GitHub Secrets로 환경 변수 관리
+* 하위 디렉토리 대응을 위한 `working-directory` 설정 포함
+
+```yaml
+defaults:
+  run:
+    working-directory: moneytalk
+```
+
+### 📈 Test Coverage (Jacoco)
+
+* `jacocoTestReport` → HTML 리포트 자동 생성 (`/build/reports/...`)
+* `finalizedBy` 설정을 통해 테스트 후 리포트 자동 실행
+
+### 🐳 Docker & Compose
+
+* 경량 Alpine 기반 JDK 이미지 사용
+* 빌드된 JAR 파일을 `app.jar`로 복사하여 실행
+
+```dockerfile
+FROM eclipse-temurin:17-jdk-alpine
+ARG JAR_FILE=build/libs/moneytalk-0.0.1-SNAPSHOT.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+* `docker-compose.yml` 내 Redis, App 통합 및 포트 매핑
+
+### ☁️ CD (EC2 자동 배포 성공 사례)
+
+* GitHub Actions 내 `deploy.yml` 워크플로에서 배포 자동화 완료
+* DockerHub에서 최신 이미지 Pull 후 실행
+
+```yaml
+- name: Deploy to EC2
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ec2-user
+    key: ${{ secrets.EC2_KEY }}
+    script: |
+      docker pull kdhdaniel/moneytalk-backend:latest
+      cd ~/moneytalk-deploy
+      docker-compose down
+      docker-compose up -d
+```
+
+✅ `git push` → CI → DockerHub Push → EC2 배포까지 자동화 완료
+
+---
+
+### 🐞 TroubleShooting 기록
+
+#### 1. `COPY` 실패 오류 (Dockerfile)
+
+* 경로 문제 → working-directory 누락으로 인한 jar 경로 mismatch
+* 해결: `defaults.run.working-directory` 설정 추가
+
+#### 2. Redis `localhost` 연결 실패
+
+* 컨테이너 내부는 자기 자신을 의미 → `redis.host=redis` 로 수정 필요
+
+#### 3. GitHub Actions 환경 변수 오류
+
+* `.env` 미적용 상태에서 실행되어 오류 → `secrets` 로 주입 해결
+
+#### 4. SSH 접속 오류
+
+* pem 권한 (`chmod 400`) 또는 포트 허용 누락 → EC2 보안 그룹 확인
+
+---
+
+### 🐋 DockerHub 자동 Push 설정
+
+```yaml
+- name: Log in to DockerHub
+  uses: docker/login-action@v3
+  with:
+    username: ${{ secrets.DOCKER_USERNAME }}
+    password: ${{ secrets.DOCKER_PASSWORD }}
+
+- name: Build and Push Docker Image
+  run: |
+    docker build -t kdhdaniel/moneytalk-backend:latest .
+    docker push kdhdaniel/moneytalk-backend:latest
+```
+
+* DockerHub에 최신 이미지 자동 업로드
+* EC2에서 Pull → Compose로 실행 가능
+
+✅ 개발 → Push → DockerHub → EC2 자동 배포 파이프라인 완성
+
+---
 # 📷 데모 스크린샷
 
 - ✅ 프론트 채팅 전송 화면

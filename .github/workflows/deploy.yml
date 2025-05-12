@@ -1,0 +1,30 @@
+name: Deploy to EC2 from DockerHub
+
+on:
+  workflow_run:
+    workflows: ["MoneyTalk Backend CI/CD"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} 
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decode SSH key
+      run: |
+        echo "${{ secrets.EC2_KEY }}" | base64 -d > ec2-key.pem
+        chmod 600 ec2-key.pem
+
+    - name: Connect & deploy to EC2
+      run: |
+        ssh -tt -o StrictHostKeyChecking=no -i ec2-key.pem ${{ secrets.EC2_HOST }} << 'EOF'
+          cd /home/ec2-user/moneytalk-deploy
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker pull kdhdaniel/moneytalk-backend:latest
+          docker-compose down
+          docker-compose up -d
+          exit 0
+        EOF
+
