@@ -10,6 +10,7 @@
 ![Swagger](https://img.shields.io/badge/API-Docs-yellow)
 ![WebSocket](https://img.shields.io/badge/Realtime-Chat-green)
 [![MoneyTalk Backend CI/CD](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml/badge.svg)](https://github.com/DoHyunDaniel/moneytalk/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/DoHyunDaniel/moneytalk/branch/main/graph/badge.svg)](https://codecov.io/gh/DoHyunDaniel/moneytalk)
 
 ---
 
