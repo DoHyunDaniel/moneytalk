@@ -145,6 +145,46 @@
 - JWT 인증 필요 API → Swagger Authorize 버튼 사용 (Bearer token)
 
 ---
+## 🚀 배포 자동화 구성 (CI/CD with GitHub Actions + Docker + AWS EC2)
+
+배포는 GitHub Actions를 기반으로 완전 자동화되어 있습니다.  
+코드를 `main` 브랜치에 push 하면, 다음과 같은 순서로 배포가 진행됩니다.
+
+### 📦 전체 배포 흐름
+
+GitHub Push → GitHub Actions → Docker Hub → EC2 SSH → docker-compose up
+
+---
+
+### ⚙️ 1. CI 구성 (Continuous Integration)
+
+| 단계 | 설명 |
+|------|------|
+| ✅ 테스트 실행 | `./gradlew test`로 전체 테스트 수행 |
+| ✅ 빌드 | `./gradlew build`로 `.jar` 파일 생성 |
+| ✅ Docker Build | Docker 이미지 빌드 (`moneytalk-backend:latest`) |
+| ✅ Docker Push | Docker Hub로 푸시 (`kdhdaniel/moneytalk-backend:latest`) |
+
+---
+
+### 🚀 2. CD 구성 (Continuous Deployment)
+
+| 단계 | 설명 |
+|------|------|
+| ✅ SSH 접속 | GitHub Actions에서 EC2 서버에 비밀 키를 이용해 자동 접속 |
+| ✅ 이미지 Pull | Docker Hub에서 최신 이미지 pull |
+| ✅ 서비스 재시작 | 기존 컨테이너 종료 후 `docker-compose up -d`로 재시작 |
+
+---
+
+### 📂 EC2 배포 디렉토리 구조
+
+```bash
+/home/ec2-user/moneytalk-deploy/
+├── docker-compose.yml   # Redis + Backend 컨테이너 정의
+├── .env                 # 환경 변수 설정 파일
+
+---
 
 ## [ 개발 계획 - 5주 ]
 
