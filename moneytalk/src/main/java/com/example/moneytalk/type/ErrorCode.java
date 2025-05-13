@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ErrorCode {
 
+	UNAUTHORIZED(401, "UNAUTHORIZED", "인증되지 않은 사용자입니다."),
 	USER_NOT_FOUND(404, "USER_NOT_FOUND", "존재하지 않는 사용자입니다."),
 	SENDER_NOT_FOUND(404, "SENDER_NOT_FOUND","메세지 송신자가 존재하지 않습니다."),
 	RECEIVER_NOT_FOUND(404, "RECEIVER_NOT_FOUND","메세지 수신자가 존재하지 않습니다."),
@@ -14,7 +15,10 @@ public enum ErrorCode {
 	INVALID_INPUT_VALUE(400, "INVALID_INPUT_VALUE", "올바르지 않은 입력입니다."),
 	INTERNAL_SERVER_ERROR(500, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
 	PRODUCT_ALREADY_SOLD(404,"PRODUCT_ALREADY_SOLD", "이미 판매완료된 상품입니다."),
+	PRODUCT_NOT_SALE(404, "PRODUCT_NOT_SALE", "상품이 판매중이 아닙니다."),
 	PRODUCT_ACCESS_DENIED(403, "PRODUCT_ACCESS_DENIED","상품 수정 권한이 없습니다."),
+	PURCHASE_HISTORY_ALREADY_EXISTS(409, "PURCHASE_HISTORY_ALREADY_EXISTS", "이미 동일한 구매 기록이 존재합니다."),
+	LEDGER_ALREADY_EXISTS(409, "LEDGER_ALREADY_EXISTS", "이미 존재하는 가계부 기록입니다."),
 	CANNOT_PURCHASE_OWN_PRODUCT(400, "CANNOT_PURCHASE_OWN_PRODUCT", "본인의 상품은 구매확정할 수 없습니다."),
 	EMAIL_ALREADY_EXISTS(409, "EMAIL_ALREADY_EXISTS", "이미 사용 중인 이메일입니다."),
 	NICKNAME_ALREADY_EXISTS(409, "NICKNAME_ALREADY_EXISTS", "이미 사용 중인 닉네임입니다."),

@@ -24,6 +24,7 @@ import com.example.moneytalk.dto.LoginRequestDto;
 import com.example.moneytalk.dto.SignUpRequestDto;
 import com.example.moneytalk.exception.GlobalException;
 import com.example.moneytalk.repository.UserRepository;
+import com.example.moneytalk.type.ErrorCode;
 import com.example.moneytalk.type.UserType;
 
 @ActiveProfiles("test")
@@ -177,4 +178,21 @@ class UserServiceTest {
         // then
         assertThrows(GlobalException.class, () -> userService.signIn(request));
     }
+    
+    @Test
+    void whenSignUpWithExistingNickname_thenThrowException() {
+        // given
+        SignUpRequestDto request = new SignUpRequestDto();
+        request.setEmail("new@example.com");
+        request.setPassword("password123");
+        request.setNickname("duplicatedNickname");
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByNickname(request.getNickname())).thenReturn(true);
+
+        // when & then
+        GlobalException ex = assertThrows(GlobalException.class, () -> userService.signUp(request));
+        assertEquals(ErrorCode.NICKNAME_ALREADY_EXISTS, ex.getErrorCode());
+    }
+
 }

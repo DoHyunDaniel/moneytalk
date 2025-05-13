@@ -14,6 +14,7 @@ import com.example.moneytalk.repository.ReviewImageRepository;
 import com.example.moneytalk.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * ReviewImageService
@@ -31,6 +32,7 @@ import lombok.RequiredArgsConstructor;
  * @since 2025.04.15
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ReviewImageService {
 
@@ -59,10 +61,11 @@ public class ReviewImageService {
                             .imageUrl(imageUrl)
                             .build();
                     reviewImageRepository.save(reviewImage);
+                    log.info("업로드된 이미지 URL: {}", imageUrl);
                     return imageUrl;
                 })
                 .collect(Collectors.toList());
-
+        
         return uploadedUrls;
     }
 

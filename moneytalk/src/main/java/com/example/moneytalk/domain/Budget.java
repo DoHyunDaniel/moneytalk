@@ -34,7 +34,7 @@ public class Budget {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(nullable = false, length = 7)
+    @Column(nullable = false, length = 7, name = "`month`")
     private String month; // "YYYY-MM" 형식
 
     @Column(nullable = false)

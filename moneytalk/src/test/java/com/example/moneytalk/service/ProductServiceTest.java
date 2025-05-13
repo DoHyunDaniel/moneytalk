@@ -2,6 +2,7 @@ package com.example.moneytalk.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -46,16 +47,16 @@ class ProductServiceTest {
 
 	@Mock
 	private ProductImageRepository productImageRepository;
-	
+
 	@Mock
 	private PurchaseRecordRepository purchaseRecordRepository;
-	
+
 	@Mock
 	private PurchaseHistoryRepository purchaseHistoryRepository;
-	
+
 	@Mock
 	private LedgerRepository ledgerRepository;
-	
+
 	@Mock
 	private S3Uploader s3Uploader;
 
@@ -216,121 +217,109 @@ class ProductServiceTest {
 
 	@Test
 	void createProductWithImages_정상등록_성공() {
-	    // given
-	    ProductRequestDto dto = new ProductRequestDto();
-	    dto.setTitle("카메라");
-	    dto.setDescription("중고, 양호");
-	    dto.setPrice(300000);
-	    dto.setCategory("전자기기");
-	    dto.setLocation("서울");
+		// given
+		ProductRequestDto dto = new ProductRequestDto();
+		dto.setTitle("카메라");
+		dto.setDescription("중고, 양호");
+		dto.setPrice(300000);
+		dto.setCategory("전자기기");
+		dto.setLocation("서울");
 
-	    User user = User.builder().id(1L).nickname("판매자").build();
+		User user = User.builder().id(1L).nickname("판매자").build();
 
-	    // 모의 이미지 파일 1개 생성
-	    MockMultipartFile image = new MockMultipartFile(
-	            "image", "camera.jpg", "image/jpeg", "fake-image-content".getBytes());
+		// 모의 이미지 파일 1개 생성
+		MockMultipartFile image = new MockMultipartFile("image", "camera.jpg", "image/jpeg",
+				"fake-image-content".getBytes());
 
-	    List<MultipartFile> images = List.of(image);
+		List<MultipartFile> images = List.of(image);
 
-	    Product dummySavedProduct = Product.builder()
-	            .id(1L)
-	            .user(user)
-	            .title(dto.getTitle())
-	            .description(dto.getDescription())
-	            .price(dto.getPrice())
-	            .category(dto.getCategory())
-	            .location(dto.getLocation())
-	            .status(ProductStatus.SALE)
-	            .build();
+		Product dummySavedProduct = Product.builder().id(1L).user(user).title(dto.getTitle())
+				.description(dto.getDescription()).price(dto.getPrice()).category(dto.getCategory())
+				.location(dto.getLocation()).status(ProductStatus.SALE).build();
 
-	    given(productRepository.save(any(Product.class))).willReturn(dummySavedProduct);
-	    given(s3Uploader.uploadFile(any(MultipartFile.class), eq("products")))
-	            .willReturn("https://s3.amazon.com/products/camera.jpg");
+		given(productRepository.save(any(Product.class))).willReturn(dummySavedProduct);
+		given(s3Uploader.uploadFile(any(MultipartFile.class), eq("products")))
+				.willReturn("https://s3.amazon.com/products/camera.jpg");
 
-	    // when
-	    productService.createProductWithImages(dto, images, user);
+		// when
+		productService.createProductWithImages(dto, images, user);
 
-	    // then
-	    // 이미지 저장이 호출되었는지 검증
-	    verify(productImageRepository, times(1)).saveAll(any());
+		// then
+		// 이미지 저장이 호출되었는지 검증
+		verify(productImageRepository, times(1)).saveAll(any());
 	}
-	
+
 	@Test
 	void searchProducts_조건검색_성공() {
-	    // given
-	    ProductSearchRequestDto request = new ProductSearchRequestDto(); // 조건 없이도 호출 가능
+		// given
+		ProductSearchRequestDto request = new ProductSearchRequestDto(); // 조건 없이도 호출 가능
 
-	    User user = User.builder().id(1L).nickname("판매자").build();
+		User user = User.builder().id(1L).nickname("판매자").build();
 
-	    Product product = Product.builder()
-	            .id(1L)
-	            .title("닌텐도 스위치")
-	            .description("박스 포함, 상태 A급")
-	            .price(250000)
-	            .category("게임기기")
-	            .location("서울")
-	            .status(ProductStatus.SALE)
-	            .user(user)
-	            .build();
+		Product product = Product.builder().id(1L).title("닌텐도 스위치").description("박스 포함, 상태 A급").price(250000)
+				.category("게임기기").location("서울").status(ProductStatus.SALE).user(user).build();
 
-	    given(productRepository.searchByConditions(any(ProductSearchRequestDto.class)))
-	            .willReturn(List.of(product));
+		given(productRepository.searchByConditions(any(ProductSearchRequestDto.class))).willReturn(List.of(product));
 
-	    given(productImageRepository.findByProduct(product))
-	            .willReturn(List.of(ProductImage.builder().imageUrl("https://s3.amazon.com/nintendo.jpg").build()));
+		given(productImageRepository.findByProduct(product))
+				.willReturn(List.of(ProductImage.builder().imageUrl("https://s3.amazon.com/nintendo.jpg").build()));
 
-	    // when
-	    List<ProductResponseDto> result = productService.searchProducts(request);
+		// when
+		List<ProductResponseDto> result = productService.searchProducts(request);
 
-	    // then
-	    assertThat(result).hasSize(1);
-	    assertThat(result.get(0).getTitle()).isEqualTo("닌텐도 스위치");
-	    assertThat(result.get(0).getImages()).contains("https://s3.amazon.com/nintendo.jpg");
-	    assertThat(result.get(0).getSellerNickname()).isEqualTo("판매자");
+		// then
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getTitle()).isEqualTo("닌텐도 스위치");
+		assertThat(result.get(0).getImages()).contains("https://s3.amazon.com/nintendo.jpg");
+		assertThat(result.get(0).getSellerNickname()).isEqualTo("판매자");
 	}
 
-	
 	@Test
 	void confirmPurchase_성공() {
-	    // given
-	    Long productId = 1L;
+		// given
+		Long productId = 1L;
 
-	    User seller = User.builder().id(1L).nickname("판매자").build();
-	    User buyer = User.builder().id(2L).nickname("구매자").build();
+		User seller = User.builder().id(1L).nickname("판매자").build();
+		User buyer = User.builder().id(2L).nickname("구매자").build();
 
-	    Product product = Product.builder()
-	            .id(productId)
-	            .user(seller)
-	            .price(10000)
-	            .title("책상")
-	            .category("가구")
-	            .location("서울")
-	            .status(ProductStatus.SALE)
-	            .build();
+		Product product = Product.builder().id(productId).user(seller).price(10000).title("책상").category("가구")
+				.location("서울").status(ProductStatus.SALE).build();
 
-	    given(productRepository.findById(productId)).willReturn(Optional.of(product));
-	    given(purchaseRecordRepository.existsByProduct(product)).willReturn(false);
-	    given(purchaseHistoryRepository.existsByUserAndProductAndType(eq(buyer), eq(product), eq(PurchaseType.PURCHASE)))
-	            .willReturn(false);
-	    given(purchaseHistoryRepository.existsByUserAndProductAndType(eq(seller), eq(product), eq(PurchaseType.SALE)))
-	            .willReturn(false);
-	    given(ledgerRepository.existsByUserAndMemoAndAmount(eq(buyer), eq("책상 구매"), eq(10000)))
-	            .willReturn(false);
-	    given(ledgerRepository.existsByUserAndMemoAndAmount(eq(seller), eq("책상 판매"), eq(10000)))
-	            .willReturn(false);
+		given(productRepository.findById(productId)).willReturn(Optional.of(product));
+		given(purchaseRecordRepository.existsByProduct(product)).willReturn(false);
+		given(purchaseHistoryRepository.existsByUserAndProductAndType(eq(buyer), eq(product),
+				eq(PurchaseType.PURCHASE))).willReturn(false);
+		given(purchaseHistoryRepository.existsByUserAndProductAndType(eq(seller), eq(product), eq(PurchaseType.SALE)))
+				.willReturn(false);
+		given(ledgerRepository.existsByUserAndMemoAndAmount(eq(buyer), eq("책상 구매"), eq(10000))).willReturn(false);
+		given(ledgerRepository.existsByUserAndMemoAndAmount(eq(seller), eq("책상 판매"), eq(10000))).willReturn(false);
 
-	    // when
-	    productService.confirmPurchase(productId, buyer);
+		// when
+		productService.confirmPurchase(productId, buyer);
 
-	    // then
-	    assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD);
-	    assertThat(product.getBuyer()).isEqualTo(buyer);
+		// then
+		assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD);
+		assertThat(product.getBuyer()).isEqualTo(buyer);
 
-	    // Mock 저장 메소드들 모두 1회씩 호출됐는지 확인
-	    verify(purchaseRecordRepository).save(any());
-	    verify(purchaseHistoryRepository, times(4)).save(any()); // 구매자 + 판매자
-	    verify(ledgerRepository, times(4)).save(any()); // 수입 + 지출
+		// Mock 저장 메소드들 모두 1회씩 호출됐는지 확인
+		verify(purchaseRecordRepository).save(any());
+		verify(purchaseHistoryRepository, times(4)).save(any()); // 구매자 + 판매자
+		verify(ledgerRepository, times(4)).save(any()); // 수입 + 지출
 	}
 
-	
+	@Test
+	void confirmPurchase_실패_상품없음() {
+		// given
+		Long productId = 999L;
+		User buyer = User.builder().id(1L).build();
+
+		given(productRepository.findById(productId)).willReturn(Optional.empty());
+
+		// when & then
+		GlobalException ex = assertThrows(GlobalException.class,
+				() -> productService.confirmPurchase(productId, buyer));
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_NOT_FOUND);
+	}
+
+
 }

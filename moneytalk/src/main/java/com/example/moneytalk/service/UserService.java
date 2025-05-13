@@ -138,12 +138,17 @@ public class UserService {
      * @return 사용자 정보 응답 DTO (id, email, nickname)
      */
 	public UserInfoResponseDto getMyInfo(User user) {
-		return UserInfoResponseDto.builder()
-		        .userId(user.getId())
-		        .email(user.getEmail())
-		        .nickname(user.getNickname())
-		        .build();
+	    if (user == null) {
+	        throw new GlobalException(ErrorCode.UNAUTHORIZED);
+	    }
+
+	    return UserInfoResponseDto.builder()
+	            .userId(user.getId())
+	            .email(user.getEmail())
+	            .nickname(user.getNickname())
+	            .build();
 	}
+
 
 	
     /**

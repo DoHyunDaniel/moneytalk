@@ -29,6 +29,19 @@ public class GlobalExceptionHandler {
 
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
     }
+    
+ // 1-1. Validation 실패 (ModelAttribute, form-data)
+    @ExceptionHandler(org.springframework.validation.BindException.class)
+    public ResponseEntity<ErrorResponse> handleBindException(
+            org.springframework.validation.BindException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> String.format("[%s] %s", e.getField(), e.getDefaultMessage()))
+            .collect(Collectors.joining("; "));
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+    }
 
     // 2. IllegalArgumentException (예: 이메일 중복, 존재하지 않는 유저 등)
     @ExceptionHandler(IllegalArgumentException.class)

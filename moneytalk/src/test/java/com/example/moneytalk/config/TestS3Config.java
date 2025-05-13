@@ -1,10 +1,11 @@
 package com.example.moneytalk.config;
 
-import com.amazonaws.services.s3.AmazonS3;
+import static org.mockito.Mockito.mock;
+
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
-import static org.mockito.Mockito.mock;
+import com.amazonaws.services.s3.AmazonS3;
 
 @TestConfiguration
 public class TestS3Config {

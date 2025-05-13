@@ -17,6 +17,11 @@ public class JwtTokenProvider {
     public JwtTokenProvider() {
     	this.secretKey = System.getenv("JWT_SECRET_KEY");
     }
+    
+    // 테스트 전용 생성자
+    public JwtTokenProvider(String secretKey) {
+        this.secretKey = secretKey;
+    }
 
     private final long expiration = 1000L * 60 * 60 * 24; // 24시간
 
