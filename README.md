@@ -948,4 +948,43 @@ DB: MySQL (ETL된 집계 테이블 활용)
 “이번 달 카페 지출이 지난 달보다 30% 늘었어요. 줄이려면 어떨까요?”
 
 “주말 외식이 전체 소비의 40%를 차지합니다. 주중 점심을 조절해보세요.”
+
+## 3. 아키텍처 개요
+
+[User] 
+   ↓
+[Frontend: React 대시보드/모바일 앱]
+   ↓
+[Backend: Spring Boot]
+   ├─ API (가계부 CRUD, 분석 결과 제공)
+   ├─ Batch Job (Python/pandas + Spring Scheduler)
+   └─ Redis (실시간 알림/캐싱)
+   ↓
+[MySQL: Raw Transaction Data + Aggregated Tables]
+
+## 4. 기대 효과
+
+- 백엔드 + 데이터 분석 융합
+
+- 단순 서비스 구현 → 데이터 기반 기능까지 확장 가능함을 증명
+
+- 정량적 지표 제시 가능
+
+“월간 1만 건의 가계부 데이터를 분석하여 예산 초과 확률을 85% 정확도로 예측”
+
+“사용자 리포트 조회 API 평균 응답속도 200ms 달성 (Redis 캐싱 활용)”
+
+## 5. 구현 단계 제안
+
+- 데이터 분석 모듈: pandas로 월간 소비 패턴 추출 (CSV/DB 기반)
+
+- Spring Scheduler 연동: 정기적으로 분석 실행 후 MySQL 집계 테이블에 저장
+
+- API 제공: /api/v1/reports/{userId} → JSON 형태로 분석 결과 반환
+
+- 대시보드 구축: React + Chart.js로 시각화
+
+- 예산 초과 예측: 단순 통계 → 추후 ML 모델로 확장 가능
+
+- 챗봇 연동: OpenAI API + 분석 결과를 기반으로 답변
 ---
