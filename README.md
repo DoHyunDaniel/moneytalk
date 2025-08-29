@@ -988,3 +988,398 @@ DB: MySQL (ETL된 집계 테이블 활용)
 
 - 챗봇 연동: OpenAI API + 분석 결과를 기반으로 답변
 ---
+# MoneyTalk 데이터 융합형 포트폴리오 – 기능 명세서 v1
+
+> 목적: 기존 MoneyTalk(가계부/중고거래/채팅) 위에 **소비 패턴 분석 · 예산 초과 예측 · 리포트 · 알림** 기능을 확장한다.
+
+---
+
+## 0. 범위 & 원칙
+
+* **API Prefix**: `/api/v1` (JWT 인증 필수, Bearer 토큰)
+* **대상 도메인**: 리포트(Reports), 예측(Predictions), 알림(Alerts), 대시보드(Dashboards), 관리자(Admin)
+* **비기능 요구사항(NFR)**
+
+  * 평균 응답속도 p95 ≤ 300ms (캐싱 적용 구간)
+  * 배치 처리: 일 1회 03:00 KST, 사용자 트랜잭션 100만 건 기준 30분 내 완료 목표
+  * 가용성 ≥ 99.5% (API)
+  * 로그/메트릭 수집: 요청/응답, 배치 상태, 예측 정확도(월간)
+
+---
+
+## 1. 데이터 모델 (요약)
+
+> 기존 테이블(예: `transactions`, `budgets`, `users`)이 있다고 가정하고, 분석/집계용 테이블을 추가한다.
+
+### 1.1 신규 테이블
+
+* **`analytics_monthly_summary`**  (월간 카테고리 집계)
+
+  * `id`(PK), `user_id`(FK), `year_month`(CHAR(7), 예: `2025-08`), `category`(VARCHAR), `amount_total`(DECIMAL), `amount_avg_daily`(DECIMAL), `count_tx`(INT), `created_at`, `updated_at`
+  * INDEX: (`user_id`, `year_month`), (`user_id`, `year_month`, `category`)
+
+* **`analytics_daily_timeseries`** (일자별 합계)
+
+  * `id`(PK), `user_id`, `date`(DATE), `amount_total`(DECIMAL), `count_tx`(INT), `created_at`
+  * INDEX: (`user_id`, `date`)
+
+* **`analytics_outliers`** (이상치 탐지 결과)
+
+  * `id`(PK), `user_id`, `tx_date`(DATE), `amount`(DECIMAL), `zscore`(DECIMAL), `category`(VARCHAR), `note`(VARCHAR), `created_at`
+
+* **`pred_budget_overrun`** (예산 초과 예측)
+
+  * `id`(PK), `user_id`, `year_month`(CHAR(7)), `prob_overrun`(DECIMAL(5,4)), `expected_overrun_amount`(DECIMAL), `model_version`(VARCHAR), `features_json`(JSON), `created_at`
+  * UNIQUE: (`user_id`, `year_month`)
+
+* **`alerts`** (알림 저장)
+
+  * `id`(PK), `user_id`, `type`(ENUM: `BUDGET_OVERRUN`, `INSIGHT`, `SYSTEM`), `severity`(ENUM: `INFO`, `WARN`, `CRITICAL`), `title`(VARCHAR), `message`(TEXT), `payload_json`(JSON), `delivered_at`, `read_at`, `created_at`
+  * INDEX: (`user_id`, `created_at`), (`user_id`, `read_at`)
+
+> 스키마는 마이그레이션 도구(Flyway/Liquibase)로 적용. 금액 DECIMAL은 서비스 기준(예: DECIMAL(14,2)) 적용.
+
+---
+
+## 2. 배치 & 파이프라인
+
+### 2.1 스케줄
+
+* **CRON (KST)**: 매일 03:00 `0 0 3 * * *`
+* 순서: (1) 집계 → (2) 이상치 → (3) 예측 → (4) 알림 생성/전송 → (5) 캐시 워밍업
+
+### 2.2 처리 개요
+
+1. **월간/일간 집계**: `transactions` → `analytics_monthly_summary`, `analytics_daily_timeseries`
+2. **이상치 탐지**: 일자별 금액의 z-score 기반(임계값 기본 2.5)
+3. **예산 초과 예측**: 간단 로지스틱 회귀(특징 예시)
+
+   * `spend_to_date_ratio` (월 누적 지출 / 현재일까지의 예산 할당)
+   * `days_passed_ratio` (경과일/월일수)
+   * `last3m_avg_spend` (최근 3개월 평균 지출)
+   * `category_burn_rate_top3` (상위 3개 카테고리 소진 속도)
+   * 출력: `prob_overrun`, `expected_overrun_amount`
+4. **알림**: `prob_overrun ≥ 0.7` 이면 `BUDGET_OVERRUN` 알림 생성 및 전송
+5. **캐시 워밍업**: 최근 월 리포트/대시보드 키 프리로드
+
+> Python(pandas) 배치 사이드카 권장: Spring Scheduler → Python CLI 호출(SQLAlchemy로 DB 읽고/쓰기). 단일 레포 내 `batch/` 폴더 및 Docker 이미지 분리.
+
+---
+
+## 3. 캐싱 & 키 설계 (Redis)
+
+* `report:monthly:{userId}:{yyyyMM}` TTL 6h
+* `report:timeseries:{userId}:{start}:{end}` TTL 6h
+* `prediction:budget:{userId}:{yyyyMM}` TTL 24h
+* **무효화 트리거**: `transactions` 작성/수정/삭제 시 해당 월 키 삭제 → 메시지 큐/이벤트로 발행 후 구독자에서 삭제 처리
+
+---
+
+## 4. 보안/권한
+
+* 인증: JWT (Authorization: Bearer `<token>`)
+* 권한: `ROLE_USER`(자기 데이터만), `ROLE_ADMIN`(전역 재계산/조회 가능)
+* 속도제한(선택): Bucket4j (예: 60req/min/user)
+
+---
+
+## 5. 오류 규약
+
+```json
+{
+  "timestamp": "2025-08-29T12:34:56Z",
+  "path": "/api/v1/reports/monthly/2025-08",
+  "status": 400,
+  "code": "MTR-4001",
+  "message": "invalid_date_range",
+  "details": {"start":"2025-08-31","end":"2025-08-01"}
+}
+```
+
+* 주요 코드: `MTR-4001 invalid_date_range`, `MTR-4030 forbidden`, `MTR-4041 report_not_found`, `MTR-4290 rate_limited`, `MTR-5000 internal_error`
+
+---
+
+## 6. 엔드포인트 요약
+
+| 그룹          | 메서드  | 경로                                        | 설명                                     |
+| ----------- | ---- | ----------------------------------------- | -------------------------------------- |
+| Reports     | GET  | `/reports/monthly/{yearMonth}`            | 월간 요약(카테고리 TOP/N, 전월 대비 등)             |
+| Reports     | GET  | `/reports/timeseries`                     | 일/주 단위 시계열 합계                          |
+| Reports     | GET  | `/reports/outliers`                       | 이상치(급증일) 목록                            |
+| Reports     | GET  | `/reports/summary`                        | 범용 집계(그룹바이: category/weekday/merchant) |
+| Predictions | GET  | `/predictions/budget-overrun/{yearMonth}` | 예산 초과 확률 조회                            |
+| Alerts      | GET  | `/alerts`                                 | 내 알림 목록 조회(페이징)                        |
+| Alerts      | POST | `/alerts/{id}/ack`                        | 알림 읽음 처리                               |
+| Dashboards  | GET  | `/dashboards/kpis`                        | 핵심 KPI(월 누적, 일 평균, 전월 대비 등)            |
+| Dashboards  | GET  | `/dashboards/top-categories`              | 상위 카테고리 랭킹                             |
+| Dashboards  | GET  | `/dashboards/heatmap`                     | 요일×시간 소비 히트맵                           |
+| Admin       | POST | `/admin/reports/recompute`                | (전/지정 사용자) 리포트 재계산 트리거                 |
+| Admin       | GET  | `/admin/metrics/accuracy`                 | 예측 정확도/리콜/정밀도 등 모델 성능                  |
+
+> 모든 응답은 `Content-Type: application/json; charset=utf-8`
+
+---
+
+## 7. 엔드포인트 상세
+
+### 7.1 Reports
+
+#### 7.1.1 월간 요약
+
+* **GET** `/api/v1/reports/monthly/{yearMonth}`  (예: `2025-08`)
+* **Query**: `top=5`(선택, 기본 3)
+* **200 응답 예시**
+
+```json
+{
+  "yearMonth": "2025-08",
+  "total": 1450000.00,
+  "avgDaily": 48333.33,
+  "prevMonthDeltaPct": 12.4,
+  "topCategories": [
+    {"category":"식비","total":620000.00,"ratio":0.4276},
+    {"category":"교통","total":210000.00,"ratio":0.1448},
+    {"category":"카페","total":180000.00,"ratio":0.1241}
+  ],
+  "insights": [
+    {"type":"INCREASE","message":"카페 지출이 전월 대비 30% 증가"},
+    {"type":"TIP","message":"주중 점심 지출이 집중됨 – 도시락 전환 제안"}
+  ]
+}
+```
+
+#### 7.1.2 시계열 합계
+
+* **GET** `/api/v1/reports/timeseries?start=2025-08-01&end=2025-08-31&interval=daily`
+* `interval`: `daily`|`weekly` (기본 `daily`)
+* **200 응답 예시**
+
+```json
+{
+  "start": "2025-08-01",
+  "end": "2025-08-31",
+  "interval": "daily",
+  "points": [
+    {"date":"2025-08-01","total":32000.00,"count":3},
+    {"date":"2025-08-02","total":12000.00,"count":1}
+  ]
+}
+```
+
+#### 7.1.3 이상치 목록
+
+* **GET** `/api/v1/reports/outliers?start=2025-08-01&end=2025-08-31&z=2.5`
+* **200 응답 예시**
+
+```json
+{
+  "zThreshold": 2.5,
+  "items": [
+    {"date":"2025-08-12","amount":230000.00,"z":3.1,"category":"외식"}
+  ]
+}
+```
+
+#### 7.1.4 범용 집계(그룹바이)
+
+* **GET** `/api/v1/reports/summary?start=2025-08-01&end=2025-08-31&group_by=category&limit=10`
+* `group_by`: `category`|`weekday`|`merchant`
+* **200 응답 예시**
+
+```json
+{
+  "groupBy": "category",
+  "rows": [
+    {"key":"식비","total":620000.00,"ratio":0.4276,"count":42},
+    {"key":"교통","total":210000.00,"ratio":0.1448,"count":25}
+  ]
+}
+```
+
+---
+
+### 7.2 Predictions
+
+#### 7.2.1 예산 초과 예측
+
+* **GET** `/api/v1/predictions/budget-overrun/{yearMonth}`
+* **200 응답 예시**
+
+```json
+{
+  "yearMonth": "2025-08",
+  "probOverrun": 0.82,
+  "expectedOverrunAmount": 180000.00,
+  "model": {"version":"lr-0.1.0","threshold":0.7},
+  "features": {
+    "spend_to_date_ratio": 1.12,
+    "days_passed_ratio": 0.55,
+    "last3m_avg_spend": 1320000.00,
+    "category_burn_rate_top3": 0.74
+  },
+  "advice": "현재 속도로는 예산 초과 가능성이 높습니다. 카페/외식 카테고리 조정 권장."
+}
+```
+
+---
+
+### 7.3 Alerts
+
+#### 7.3.1 알림 목록
+
+* **GET** `/api/v1/alerts?page=0&size=20&unreadOnly=false`
+* **200 응답 예시**
+
+```json
+{
+  "page": 0,
+  "size": 20,
+  "total": 3,
+  "items": [
+    {
+      "id": 1123,
+      "type": "BUDGET_OVERRUN",
+      "severity": "WARN",
+      "title": "예산 초과 위험",
+      "message": "8월 예산을 초과할 가능성이 82%입니다.",
+      "payload": {"yearMonth":"2025-08","prob":0.82},
+      "deliveredAt": "2025-08-15T03:10:12+09:00",
+      "readAt": null
+    }
+  ]
+}
+```
+
+#### 7.3.2 읽음 처리
+
+* **POST** `/api/v1/alerts/{id}/ack`
+* **204 No Content**
+
+> 실시간 전송: STOMP `/topic/alerts/{userId}` 채널 송신 (기존 WebSocket 인프라 재사용)
+
+---
+
+### 7.4 Dashboards
+
+#### 7.4.1 KPI
+
+* **GET** `/api/v1/dashboards/kpis?yearMonth=2025-08`
+* **200 응답 예시**
+
+```json
+{
+  "yearMonth":"2025-08",
+  "kpis": {
+    "totalSpend": 1450000.00,
+    "avgDaily": 48333.33,
+    "prevMonthDeltaPct": 12.4,
+    "topCategory": {"name":"식비","ratio":0.43}
+  }
+}
+```
+
+#### 7.4.2 상위 카테고리
+
+* **GET** `/api/v1/dashboards/top-categories?yearMonth=2025-08&limit=5`
+
+#### 7.4.3 히트맵(요일×시간)
+
+* **GET** `/api/v1/dashboards/heatmap?yearMonth=2025-08`
+* **200 응답 예시**
+
+```json
+{
+  "buckets": [
+    {"weekday":"SAT","hour":13,"count":7,"total":95000.00}
+  ]
+}
+```
+
+---
+
+### 7.5 Admin
+
+#### 7.5.1 리포트 재계산
+
+* **POST** `/api/v1/admin/reports/recompute`
+* **Body(옵션)**
+
+```json
+{ "userId": 123, "yearMonth": "2025-08" }
+```
+
+* **200 응답 예시**
+
+```json
+{
+  "status": "queued",
+  "targets": {"userId":123, "yearMonth":"2025-08"},
+  "jobId": "recompute-202508-123"
+}
+```
+
+#### 7.5.2 모델 성능
+
+* **GET** `/api/v1/admin/metrics/accuracy?from=2025-06&to=2025-08`
+* **200 응답 예시**
+
+```json
+{
+  "modelVersion":"lr-0.1.0",
+  "window": {"from":"2025-06","to":"2025-08"},
+  "metrics": {"accuracy":0.81, "precision":0.78, "recall":0.74, "auc":0.85}
+}
+```
+
+---
+
+## 8. 샘플 요청 (Windows CMD 기준)
+
+```bat
+REM 토큰 환경변수 예시
+set TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+curl -X GET "http://localhost:8080/api/v1/reports/monthly/2025-08" ^
+  -H "Authorization: Bearer %TOKEN%" -H "Accept: application/json"
+
+curl -X GET "http://localhost:8080/api/v1/predictions/budget-overrun/2025-08" ^
+  -H "Authorization: Bearer %TOKEN%"
+
+curl -X POST "http://localhost:8080/api/v1/alerts/1123/ack" ^
+  -H "Authorization: Bearer %TOKEN%"
+```
+
+---
+
+## 9. 서비스 레이어 설계 (요약)
+
+* Controller → Service → Repository → (캐시) → DB
+* 리포트 조회 시 플로우: 캐시 조회 → 없으면 DB 집계 테이블 → 응답 후 캐시 저장
+* Admin 재계산: 메시지 큐(or DB job 테이블)에 enqueue → 배치 워커가 순차 실행
+
+---
+
+## 10. 테스트 & 검증
+
+* **단위**: Service/Repository, 캐시 히트/미스, 변환 로직
+* **통합**: 컨트롤러 슬라이스 + Testcontainers(MySQL/Redis)
+* **배치 E2E**: 샘플 데이터 100k/500k/1M 건으로 수행 시간 검증
+* **모델 검증**: 홀드아웃(최근 1개월) 정확도 산출, 알림 임계값 튜닝(0.6\~0.8)
+
+---
+
+## 11. 릴리스 플랜
+
+* **M1 (3\~5일)**: 스키마/엔드포인트 스켈레톤, 월간 요약/시계열 API + 캐시
+* **M2 (3\~5일)**: 배치 파이프라인(집계/이상치/예측), 알림 생성 + WebSocket 연동
+* **M3 (3\~5일)**: 대시보드 API, Admin 재계산, 모델 메트릭, 문서화(Swagger/Redoc)
+
+---
+
+## 12. 후속 산출물
+
+* Swagger 스키마(JSON) + 예시 응답
+* Flyway 스크립트 초안 (`V1_0__analytics_tables.sql`)
+* Controller/Service/Repository 스켈레톤 코드 템플릿 (Java)
+* 배치 파이썬 스크립트 템플릿(`batch/aggregate.py`, `batch/predict.py`)
